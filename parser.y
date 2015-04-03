@@ -2,6 +2,8 @@
 #include <stdio.h> 
 #include <string.h> 
 
+#define YYSTYPE char *
+
 void yyerror(const char *str) 
 {
 	fprintf(stderr, "Error: %s\n", str);
@@ -19,34 +21,18 @@ main()
 
 %}
 
+%token METACHARACTER SETENV PRINTENV UNSETENV CD ALIAS UNALIAS BYE
+
 %union 
 {
-	int variable; 
-	char *builtincommand;
-	char *word;
-	char *whitespace;
-	char *metacharacters; 
+	char *string;
 }
 
-%token <word> WORD
-%token <whitespace> WHITESPACE
-%token <variable> VARIABLE
+%token <string> WORD
+%token <string> VARIABLE
+%token <string> QUOTE
 
-%token <metacharacters> LESSTHAN
-%token <metacharacters> GREATERTHAN
-%token <metacharacters> OR
-%token <metacharacters> QUOTE
-%token <metacharacters> BACKSLASH
-%token <metacharacters> AND
-
-%token <builtincommand> SETENV 
-%token <builtincommand> PRINTENV 
-%token <builtincommand> UNSETENV 
-%token <builtincommand> CD
-%token <builtincommand> ALIAS 
-%token <builtincommand> UNALIAS 
-%token <builtincommand> BYE 
-
+%type <string> quotedword
 
 %% 
 
@@ -55,59 +41,79 @@ commands: /*empty */
 		;
 
 command: 
-		plainword | quotedword | setenv | bye | printenv | unsetenv | cd | alias | unalias
+		setenv 
+		| 
+		bye 
+		| 
+		printenv 
+		| 
+		unsetenv 
+		| 
+		cd 
+		| 
+		alias 
+		| 
+		unalias
 		;
 
-plainword:
-		WORD
-		{
-			printf("\t Input word is '%s'", $1);
-		}
-		;
+setenv: 
+ 		SETENV VARIABLE quotedword 
+ 		{
+ 			printf("\t variable is '%s' and word is '%d' \n", $2, $3);
+ 		}
+ 		;
+ 		|
+ 		SETENV VARIABLE WORD
+ 		{
+ 			printf("\t variable is '%s' and word is '%d' \n", $2, $3);
+ 		}
+ 		;
 
 quotedword:
 		QUOTE WORD QUOTE
 		{
-			printf("\t Quoted word is '%s'", $2);
-		}
-		|
-		QUOTE WORD WHITESPACE QUOTE
-		{
-			printf("\t Quoted word is '%s%d'", $2, $3);
-		}
-		|
-		QUOTE WHITESPACE WORD QUOTE
-		{
-			printf("\t Quoted word is '%s%d'", $2, $3);
+			$$ = $2;
 		}
 		;
 
-setenv: 
- 		SETENV VARIABLE WORD {printf("\t variable setenv and word\n");}
- 		;
-
 bye: 
-	BYE {printf("\t Bye back!! \n");}
+	BYE 
+	{
+		printf("\t Bye back!! \n");
+	}
 	;
 	
 printenv: 
-	PRINTENV {printf("\t Print Env selected \n");}
+	PRINTENV 
+	{
+		printf("\t Print Env selected \n");
+	}
 	;
 	
 unsetenv: 	
-	UNSETENV {printf("\t Unset Env selected \n");}
+	UNSETENV 
+	{
+		printf("\t Unset Env selected \n");
+	}
 	;
 cd:
-	CD {printf("\t CD selected \n");}
+	CD 
+	{
+		printf("\t CD selected \n");
+	}
 	;
 
 
 alias:
-	ALIAS {printf("\t Alias selected \n");}
+	ALIAS 
+	{
+		printf("\t Alias selected \n");
+	}
 	;
 
 unalias: 
-	UNALIAS {printf("\t Unalias selected \n");}
+	UNALIAS 
+	{
+		printf("\t Unalias selected \n");
+	}
 	;
-
-%%
