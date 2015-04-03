@@ -1,29 +1,34 @@
-%{include <stdio.h> 
+%{
+#include <stdio.h> 
+#include <string.h>
 #include "y.tab.h"
 %}
 
 %% 
 
-setenv		return SETENV; 
-printenv 	return PRINTENV;
-unsetenv 	return UNSETENV; 
-cd 			return CD; 
-alias 		return ALIAS; 
-bye 		return BYE; 
-unalias 	return UNALIAS; 
+["][^"\n]*["] {
+		int counter = 0;
+		char* subString = (char*)malloc(yyleng);
+		for (counter = 0; counter < yyleng-2; ++counter) {
+		subString[counter] = yytext[counter+1];
+		} 
+		yytext = subString;
+	yylval.string=strdup(yytext);
+	return LONGWORD;
+}		
 
-\"[^"\n]* {
-	int counter = 0; 
-	for (counter = 0; counter < yyleng; ++counter){
-		yytext[counter] = yytext[counter+1];
-	}
-	printf("NEw text is %s\n", yytext );
-	return WORD; 
-} 
+[<>|"\&]					return METACHARACTER;
+setenv						return SETENV; 
+printenv 					return PRINTENV;
+unsetenv 					return UNSETENV; 
+cd 							return CD; 
+alias 						return ALIAS; 
+bye 						return BYE; 
+unalias 					return UNALIAS;
+[^<>|"\& \n]+ 				yylval.string=strdup(yytext); return WORD;  
+[ \t]+						/*ignore the whitespace for now*/; 
 
-[A-Za-z_][A-Za-z0-9_]* 	return VARIABLE;
+\n 							return NEWLINE;
 
-\n; 		/*ignore end of line*/
 
 %%
-
