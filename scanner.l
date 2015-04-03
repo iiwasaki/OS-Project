@@ -16,8 +16,8 @@ alias 						return ALIAS;
 bye 						return BYE; 
 unalias 					return UNALIAS;
 [^<>|"\& \n]+ 				yylval.string=strdup(yytext); return WORD;  
-[ \t]+						yylval.string=strdup(yytext); return WHITESPACE;
-\n 							/*ignore end of line*/;
+[ \t]+						/*ignore the whitespace for now*/;
+\n 							return NEWLINE;
 
 %%
 

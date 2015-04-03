@@ -19,7 +19,7 @@ main()
 
 %}
 
-%token METACHARACTER SETENV PRINTENV UNSETENV CD ALIAS UNALIAS BYE
+%token METACHARACTER SETENV PRINTENV UNSETENV CD ALIAS UNALIAS BYE NEWLINE
 
 %union 
 {
@@ -27,7 +27,6 @@ main()
 }
 
 %token <string> WORD
-%token <string> WHITESPACE
 %token <string> QUOTE
 
 %type <string> quotedword
@@ -39,6 +38,8 @@ commands: /*empty */
 		;
 
 command: 
+		newline
+		|
 		setenv 
 		| 
 		bye 
@@ -54,6 +55,12 @@ command:
 		unalias
 		;
 
+newline:
+		NEWLINE
+		{
+			printf("\n");
+		}
+
 setenv: 
  		SETENV WORD WORD
  		{
@@ -64,15 +71,15 @@ setenv:
  		{
  			printf("\t variable is '%s' and word is '%s'  \n", $2, $3);
  		}
+ 		|
+ 		SETENV NEWLINE
+ 		{
+ 			printf("\t ERRORRR");
+ 		}
  		;
 
 quotedword:
 			QUOTE WORD QUOTE
-			{
-				$$ = $2;
-			}
-			|
-			QUOTE WHITESPACE QUOTE
 			{
 				$$ = $2;
 			}
