@@ -27,9 +27,8 @@ main()
 }
 
 %token <string> WORD
-%token <string> QUOTE
+%token <string> LONGWORD
 
-%type <string> quotedword
 
 %% 
 
@@ -67,7 +66,7 @@ setenv:
  			printf("\t variable is '%s' and word is '%s'  \n", $2, $3);
  		}
  		|
- 		SETENV WORD quotedword
+ 		SETENV WORD LONGWORD
  		{
  			printf("\t variable is '%s' and word is '%s'  \n", $2, $3);
  		}
@@ -78,12 +77,6 @@ setenv:
  		}
  		;
 
-quotedword:
-			QUOTE WORD QUOTE
-			{
-				$$ = $2;
-			}
-			;
 
 bye: 
 	BYE 
