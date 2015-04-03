@@ -6,19 +6,18 @@
 
 %% 
 
-\"						yylval=strdup(yytext); return QUOTE;
-[<>|"\&]				return METACHARACTER;
-setenv					return SETENV; 
-printenv 				return PRINTENV;
-unsetenv 				return UNSETENV; 
-cd 						return CD; 
-alias 					return ALIAS; 
-bye 					return BYE; 
-unalias 				return UNALIAS;
-[A-Za-z_][A-Za-z0-9_]* 	yylval=strdup(yytext); return VARIABLE;
-[^<>|"\&\n \t]+			yylval=strdup(yytext); return WORD;  
-[ \t]+					/*ignore the whitespace*/;
-\n 						/*ignore end of line*/;
+\"							yylval.string=strdup(yytext); return QUOTE;
+[<>|"\&]					return METACHARACTER;
+setenv						return SETENV; 
+printenv 					return PRINTENV;
+unsetenv 					return UNSETENV; 
+cd 							return CD; 
+alias 						return ALIAS; 
+bye 						return BYE; 
+unalias 					return UNALIAS;
+[^<>|"\& \n]+ 				yylval.string=strdup(yytext); return WORD;  
+[ \t]+						yylval.string=strdup(yytext); return WHITESPACE;
+\n 							/*ignore end of line*/;
 
 %%
 

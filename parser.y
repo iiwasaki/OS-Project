@@ -2,8 +2,6 @@
 #include <stdio.h> 
 #include <string.h> 
 
-#define YYSTYPE char *
-
 void yyerror(const char *str) 
 {
 	fprintf(stderr, "Error: %s\n", str);
@@ -29,7 +27,7 @@ main()
 }
 
 %token <string> WORD
-%token <string> VARIABLE
+%token <string> WHITESPACE
 %token <string> QUOTE
 
 %type <string> quotedword
@@ -57,24 +55,28 @@ command:
 		;
 
 setenv: 
- 		SETENV VARIABLE quotedword 
+ 		SETENV WORD WORD
  		{
- 			printf("\t variable is '%s' and word is '%d' \n", $2, $3);
+ 			printf("\t variable is '%s' and word is '%s'  \n", $2, $3);
  		}
- 		;
  		|
- 		SETENV VARIABLE WORD
+ 		SETENV WORD quotedword
  		{
- 			printf("\t variable is '%s' and word is '%d' \n", $2, $3);
+ 			printf("\t variable is '%s' and word is '%s'  \n", $2, $3);
  		}
  		;
 
 quotedword:
-		QUOTE WORD QUOTE
-		{
-			$$ = $2;
-		}
-		;
+			QUOTE WORD QUOTE
+			{
+				$$ = $2;
+			}
+			|
+			QUOTE WHITESPACE QUOTE
+			{
+				$$ = $2;
+			}
+			;
 
 bye: 
 	BYE 
