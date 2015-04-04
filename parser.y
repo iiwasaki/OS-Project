@@ -1,6 +1,7 @@
 %{
 #include <stdio.h> 
 #include <string.h> 
+#include "seashell.h"
 
 void yyerror(const char *str) 
 {
