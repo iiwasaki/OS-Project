@@ -39,7 +39,10 @@ static int getCommand(){
 		return OK; 
 }
 
+<<<<<<< HEAD
 /* Print all environment variables */
+=======
+>>>>>>> master
 static void printenv(){
 	int i = 0;
 	printf("Printing all environment variables: \n\n"); 
@@ -48,6 +51,7 @@ static void printenv(){
 	}
 }
 
+<<<<<<< HEAD
 /* Set environment variable. Override if one exists, create a new one if it does not. */
 static void setenv(var_name, var_value){
 	int i =0;
@@ -82,31 +86,44 @@ static void setenv(var_name, var_value){
 
 	}
 } 
+=======
+static void 
+>>>>>>> master
 
 static void do_it(){
-	switch(builtin){
+	switch(BUILT_IN){
 		case BYE: 
 			RUNNING = 0;
 			printf("Bye!!! \n");
 			break; 
+
 		case SETENV: 
-			break; 
-		case UNSETENV: 
 			break;
+
+		case UNSETENV:
+			printf("\t Unset Env selected \n"); 
+			break;
+
 		case PRINTENV: 
 			printenv();
 			break; 
+
 		case ALIAS: 
+			printf("\t Alias selected \n");
 			break;
-		case UNALIAS: 
+
+		case UNALIAS:
+			printf("\t Unalias selected \n"); 
 			break; 
+
 		case CD:
+			printf("\t CD selected \n");
 			break;
 	}
 }
 
 static void processCommand(){
-	if (builtin){
+	if (BUILT_IN){
 		do_it();
 	}
 	else 
@@ -130,8 +147,11 @@ int main(void){
 		}
 	}
 	printf("\n\nGood bye!! \n\n");
+<<<<<<< HEAD
 	// printf("Env path is %s, value is %s", TABLE_ENVAR[0].varname, TABLE_ENVAR[0].varvalue);
 	// printf("Max variable count is %d", VARCOUNT);
+=======
+>>>>>>> master
 	return 0; 
 }
 

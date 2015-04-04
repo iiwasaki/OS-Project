@@ -59,17 +59,20 @@ newline:
 setenv: 
  		SETENV WORD WORD
  		{
- 			printf("\t variable is '%s' and word is '%s'  \n", $2, $3);
+ 			BUILT_IN = SETENV; 
+			YYACCEPT;
  		}
  		|
  		SETENV WORD LONGWORD
  		{
- 			printf("\t variable is '%s' and word is '%s'  \n", $2, $3);
+ 			BUILT_IN = SETENV; 
+			YYACCEPT;
  		}
  		|
  		SETENV NEWLINE
  		{
- 			printf("\t ERRORRR");
+ 			BUILT_IN = SETENV; 
+			YYACCEPT;
  		}
  		;
 
@@ -77,7 +80,7 @@ setenv:
 bye: 
 	BYE NEWLINE
 	{
-		builtin = BYE; 
+		BUILT_IN = BYE; 
 		YYACCEPT;
 	}
 	;
@@ -85,35 +88,39 @@ bye:
 printenv: 
 	PRINTENV NEWLINE
 	{
-		printf("\t Print Env selected \n");
-		YYACCEPT; 
+		BUILT_IN = PRINTENV; 
+		YYACCEPT;
 	}
 	;
 	
 unsetenv: 	
 	UNSETENV NEWLINE 
 	{
-		printf("\t Unset Env selected \n");
+		BUILT_IN = UNSETENV; 
+		YYACCEPT;
 	}
 	;
 cd:
 	CD NEWLINE
 	{
-		printf("\t CD selected \n");
+		BUILT_IN = CD; 
+		YYACCEPT;
 	}
 	;
 
 
 alias:
-	ALIAS 
+	ALIAS NEWLINE
 	{
-		printf("\t Alias selected \n");
+		BUILT_IN = ALIAS; 
+		YYACCEPT;
 	}
 	;
 
 unalias: 
-	UNALIAS 
+	UNALIAS NEWLINE
 	{
-		printf("\t Unalias selected \n");
+		BUILT_IN = UNALIAS; 
+		YYACCEPT;
 	}
 	;
