@@ -11,8 +11,11 @@ static void printPrompt(){
 	printf("\n>> ");
 }
 
-static void shell_init(){
-	printf("Welcome to the shell! \n");
+/* initialize the shell */
+static void shell_init(){ 
+	printf("\n----------------------------\n");
+	printf("|   Welcome to the shell!  |\n");
+	printf("----------------------------\n");
 
 	TABLE_ENVAR[0].varname = "PATH"; //set PATH
 	TABLE_ENVAR[0].varvalue = getenv("PATH");
@@ -25,7 +28,8 @@ static void shell_init(){
 	RUNNING = 1; 
 }
 
-static int getCommand(){
+/* Use the parser to receive commands */
+static int getCommand(){ 
 	if(yyparse())
 	{
 		printf("Error in yyparse\n");
@@ -34,6 +38,16 @@ static int getCommand(){
 	else 
 		return OK; 
 }
+
+static void printenv(){
+	int i = 0;
+	printf("Printing all environment variables: \n\n"); 
+	for (; i<VARCOUNT; ++i){
+		printf("%s: %s \n", TABLE_ENVAR[i].varname, TABLE_ENVAR[i].varvalue);
+	}
+}
+
+static void 
 
 static void do_it(){
 	switch(BUILT_IN){
@@ -50,7 +64,7 @@ static void do_it(){
 			break;
 
 		case PRINTENV: 
-			printf("\t Print Env selected \n");
+			printenv();
 			break; 
 
 		case ALIAS: 

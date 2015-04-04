@@ -30,6 +30,7 @@ typedef struct {
 
 
 
+
 ENVVAR TABLE_ENVAR[MAXENVS];
 int VARCOUNT;
 int BUILT_IN; 
