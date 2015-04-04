@@ -6,16 +6,18 @@
 
 %% 
 
-["][^"\n]*["] {
-		int counter = 0;
-		char* subString = (char*)malloc(yyleng);
-		for (counter = 0; counter < yyleng-2; ++counter) {
-		subString[counter] = yytext[counter+1];
-		} 
-		yytext = subString;
-	yylval.string=strdup(yytext);
-	return LONGWORD;
-}		
+["][^"\n]*["] 				{
+								int counter = 0;
+								char* subString = (char*)malloc(yyleng);
+								for (counter = 0; counter < yyleng-2; ++counter) {
+		
+									subString[counter] = yytext[counter+1];
+		
+								} 
+								yytext = subString;
+								yylval.string=strdup(yytext);
+								return LONGWORD;
+							}		
 
 [<>|"\&]					return METACHARACTER;
 setenv						return SETENV; 
