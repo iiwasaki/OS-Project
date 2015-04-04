@@ -11,21 +11,25 @@ static void printPrompt(){
 	printf("\n>> ");
 }
 
-static void shell_init(){
-	printf("Welcome to the shell! \n");
+/* initialize the shell */
+static void shell_init(){ 
+	printf("\n----------------------------\n");
+	printf("|   Welcome to the shell!  |\n");
+	printf("----------------------------\n");
 
-	table[0].varname = "PATH"; //set PATH
-	table[0].varvalue = getenv("PATH");
+	TABLE_ENVAR[0].varname = "PATH"; //set PATH
+	TABLE_ENVAR[0].varvalue = getenv("PATH");
 	
-	table[1].varname = "HOME"; //set HOME
-	table[1].varvalue = getenv("HOME");
+	TABLE_ENVAR[1].varname = "HOME"; //set HOME
+	TABLE_ENVAR[1].varvalue = getenv("HOME");
 
 	VARCOUNT = 2; 
 
 	RUNNING = 1; 
 }
 
-static int getCommand(){
+/* Use the parser to receive commands */
+static int getCommand(){ 
 	if(yyparse())
 	{
 		printf("Error in yyparse\n");
@@ -34,6 +38,16 @@ static int getCommand(){
 	else 
 		return OK; 
 }
+
+static void printenv(){
+	int i = 0;
+	printf("Printing all environment variables: \n\n"); 
+	for (; i<VARCOUNT; ++i){
+		printf("%s: %s \n", TABLE_ENVAR[i].varname, TABLE_ENVAR[i].varvalue);
+	}
+}
+
+static void 
 
 static void do_it(){
 	switch(builtin){
@@ -46,6 +60,7 @@ static void do_it(){
 		case UNSETENV: 
 			break;
 		case PRINTENV: 
+			printenv();
 			break; 
 		case ALIAS: 
 			break;
@@ -81,7 +96,7 @@ int main(void){
 		}
 	}
 	printf("\n\nGood bye!! \n\n");
-	// printf("Env path is %s, value is %s", table[0].varname, table[0].varvalue);
+	// printf("Env path is %s, value is %s", TABLE_ENVAR[0].varname, TABLE_ENVAR[0].varvalue);
 	// printf("Max variable count is %d", VARCOUNT);
 	return 0; 
 }

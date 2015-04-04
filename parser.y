@@ -85,7 +85,7 @@ bye:
 printenv: 
 	PRINTENV NEWLINE
 	{
-		printf("\t Print Env selected \n");
+		builtin = PRINTENV; 
 		YYACCEPT; 
 	}
 	;
