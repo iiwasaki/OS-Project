@@ -28,7 +28,7 @@ static void shell_init(){
 static int getCommand(){
 	if(yyparse())
 	{
-		printf("Error in yyparse");
+		printf("Error in yyparse\n");
 		return SYSERR; 
 	}
 	else 
