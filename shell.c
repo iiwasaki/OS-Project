@@ -1,7 +1,21 @@
 #include "seashell.h"
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
+static void printPrompt(){
+	printf("\n>>");
+}
+
+static void shell_init(){
+	printf("Welcome to the shell! \n");
+
+	table[0].varname = "PATH";
+	table[0].varvalue = getenv("PATH");
+	
+	table[1].varname = "HOME";
+	table[1].varvalue = getenv("HOME");
+}
 
 int main(void){
 	shell_init();
@@ -15,14 +29,3 @@ int main(void){
 	return 0; 
 }
 
-static void printPrompt(){
-	printf("\n>>");
-}
-
-static void shell_init(){
-	printf("Welcome to the shell! \n");
-
-	table[0].varname = "PATH";
-	table[0].varvalue = getenv("PATH");
-	VARCOUNT = 1; 
-}
