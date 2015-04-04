@@ -27,3 +27,4 @@ typedef struct {
 
 ENVVAR table[MAXENVS]; 
 int VARCOUNT;
+int builtin; 
