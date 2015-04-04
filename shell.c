@@ -39,6 +39,7 @@ static int getCommand(){
 		return OK; 
 }
 
+/* Print all environment variables */
 static void printenv(){
 	int i = 0;
 	printf("Printing all environment variables: \n\n"); 
@@ -47,7 +48,66 @@ static void printenv(){
 	}
 }
 
-static void 
+/* Set environment variable. Override if one exists, create a new one if it does not. */
+void setenviro(char* var_name, char* var_value){
+	int i =0;
+	int envID = -1; //default "does not exist"  
+	for ( ; i < VARCOUNT; ++i){
+		if (strcmp(var_name, TABLE_ENVAR[i].varname) == 0){
+			envID = i; 
+			break; 
+		}
+	}
+
+	/* if the environment variable is to be overwritten */
+	if (envID != -1){
+		TABLE_ENVAR[envID].varvalue = var_value;
+		printf("Variable %s successfully updated.\n", TABLE_ENVAR[envID].varname);
+	}
+	/* if the environment variable is new */
+	else {
+		/* make sure there is space in the varcount */
+		if (VARCOUNT < MAXENVS){
+			/* IF THERE IS SPACE */
+			TABLE_ENVAR[VARCOUNT].varname = var_name; 
+			TABLE_ENVAR[VARCOUNT].varvalue = var_value;
+
+			VARCOUNT++; 
+			printf("New environment variable successfully created.\n ");
+		}
+		else {
+			/* NO SPACE */
+			printf ("Max number of environment variables reached. \n");
+		}
+
+	}
+} 
+
+static void unsetenviro(char* var_name)
+{ int i = 0; 
+	int found = -1; //not found
+	for(; i < VARCOUNT; i++) 
+		{ 
+			if(strcmp(var_name, TABLE_ENVAR[i].varname) == 0)
+				{ 
+					int j = i;
+					for (; j<VARCOUNT;j++){
+						TABLE_ENVAR[j].varname = TABLE_ENVAR[j+1].varname; 
+						TABLE_ENVAR[j].varvalue = TABLE_ENVAR[j+1].varname;
+					}
+					TABLE_ENVAR[VARCOUNT-1].varname = NULL; 
+					TABLE_ENVAR[VARCOUNT-1].varvalue = NULL;
+					VARCOUNT--;
+					found = 1; 
+					printf("Unset variable successfully\n");
+					break; 
+				} 
+		}
+	if (found != 1){
+		printf("\t ERRORRR! CAN'T FIND!!! \n"); 
+	}
+
+}
 
 static void do_it(){
 	switch(BUILT_IN){
@@ -57,10 +117,11 @@ static void do_it(){
 			break; 
 
 		case SETENV: 
+			setenviro(ENV_ARGS.args[0], ENV_ARGS.args[1]);
 			break;
 
 		case UNSETENV:
-			printf("\t Unset Env selected \n"); 
+			unsetenviro(ENV_ARGS.args[0]);
 			break;
 
 		case PRINTENV: 

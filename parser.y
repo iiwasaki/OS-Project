@@ -57,15 +57,19 @@ newline:
 		}
 
 setenv: 
- 		SETENV WORD WORD
+ 		SETENV WORD WORD NEWLINE
  		{
- 			BUILT_IN = SETENV; 
+ 			BUILT_IN = SETENV;
+ 			ENV_ARGS.args[0] = $2;
+ 			ENV_ARGS.args[1] = $3;  
 			YYACCEPT;
  		}
  		|
- 		SETENV WORD LONGWORD
+ 		SETENV WORD LONGWORD NEWLINE
  		{
  			BUILT_IN = SETENV; 
+ 			ENV_ARGS.args[0] = $2;
+ 			ENV_ARGS.args[1] = $3;  
 			YYACCEPT;
  		}
  		|
@@ -94,9 +98,10 @@ printenv:
 	;
 	
 unsetenv: 	
-	UNSETENV NEWLINE 
+	UNSETENV WORD NEWLINE 
 	{
 		BUILT_IN = UNSETENV; 
+		ENV_ARGS.args[0] = $2;
 		YYACCEPT;
 	}
 	;
