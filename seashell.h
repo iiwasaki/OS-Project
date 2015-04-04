@@ -6,7 +6,7 @@ Yufan Lin and Ishin Iwasaki COP4600
 #define MAXCMDS 35
 #define MAXARGS 100 
 #define MAXALIAS 100 
-#define MAXENVS 3
+#define MAXENVS 5
 
 #define OK 0 
 #define SYSERR 1 
@@ -32,6 +32,7 @@ typedef struct {
 
 
 ENVVAR TABLE_ENVAR[MAXENVS];
+ARGTAB ENV_ARGS;
 int VARCOUNT;
 int BUILT_IN; 
 int RUNNING; 

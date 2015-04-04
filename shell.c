@@ -39,10 +39,7 @@ static int getCommand(){
 		return OK; 
 }
 
-<<<<<<< HEAD
 /* Print all environment variables */
-=======
->>>>>>> master
 static void printenv(){
 	int i = 0;
 	printf("Printing all environment variables: \n\n"); 
@@ -51,9 +48,8 @@ static void printenv(){
 	}
 }
 
-<<<<<<< HEAD
 /* Set environment variable. Override if one exists, create a new one if it does not. */
-static void setenv(var_name, var_value){
+void setenviro(char* var_name, char* var_value){
 	int i =0;
 	int envID = -1; //default "does not exist"  
 	for ( ; i < VARCOUNT; ++i){
@@ -65,8 +61,8 @@ static void setenv(var_name, var_value){
 
 	/* if the environment variable is to be overwritten */
 	if (envID != -1){
-		TABLE_ENVAR[i].varvalue = var_value;
-		printf("Variable %s successfully updated.\n", TABLE_ENVAR.varname[i]);
+		TABLE_ENVAR[envID].varvalue = var_value;
+		printf("Variable %s successfully updated.\n", TABLE_ENVAR[envID].varname);
 	}
 	/* if the environment variable is new */
 	else {
@@ -86,9 +82,32 @@ static void setenv(var_name, var_value){
 
 	}
 } 
-=======
-static void 
->>>>>>> master
+
+static void unsetenviro(char* var_name)
+{ int i = 0; 
+	int found = -1; //not found
+	for(; i < VARCOUNT; i++) 
+		{ 
+			if(strcmp(var_name, TABLE_ENVAR[i].varname) == 0)
+				{ 
+					int j = i;
+					for (; j<VARCOUNT;j++){
+						TABLE_ENVAR[j].varname = TABLE_ENVAR[j+1].varname; 
+						TABLE_ENVAR[j].varvalue = TABLE_ENVAR[j+1].varname;
+					}
+					TABLE_ENVAR[VARCOUNT-1].varname = NULL; 
+					TABLE_ENVAR[VARCOUNT-1].varvalue = NULL;
+					VARCOUNT--;
+					found = 1; 
+					printf("Unset variable successfully\n");
+					break; 
+				} 
+		}
+	if (found != 1){
+		printf("\t ERRORRR! CAN'T FIND!!! \n"); 
+	}
+
+}
 
 static void do_it(){
 	switch(BUILT_IN){
@@ -98,10 +117,11 @@ static void do_it(){
 			break; 
 
 		case SETENV: 
+			setenviro(ENV_ARGS.args[0], ENV_ARGS.args[1]);
 			break;
 
 		case UNSETENV:
-			printf("\t Unset Env selected \n"); 
+			unsetenviro(ENV_ARGS.args[0]);
 			break;
 
 		case PRINTENV: 
@@ -147,11 +167,6 @@ int main(void){
 		}
 	}
 	printf("\n\nGood bye!! \n\n");
-<<<<<<< HEAD
-	// printf("Env path is %s, value is %s", TABLE_ENVAR[0].varname, TABLE_ENVAR[0].varvalue);
-	// printf("Max variable count is %d", VARCOUNT);
-=======
->>>>>>> master
 	return 0; 
 }
 
