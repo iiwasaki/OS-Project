@@ -22,10 +22,15 @@ typedef struct {
 	char *varvalue; 
 } ENVVAR; 
 
+/*table of command line arguments */
+typedef struct {
+	char *args[MAXARGS];
+} ARGTAB;
 
 
 
-ENVVAR table[MAXENVS]; 
+
+ENVVAR TABLE_ENVAR[MAXENVS];
 int VARCOUNT;
-int builtin; 
+int BUILT_IN; 
 int RUNNING; 

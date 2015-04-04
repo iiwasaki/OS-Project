@@ -14,11 +14,11 @@ static void printPrompt(){
 static void shell_init(){
 	printf("Welcome to the shell! \n");
 
-	table[0].varname = "PATH"; //set PATH
-	table[0].varvalue = getenv("PATH");
+	TABLE_ENVAR[0].varname = "PATH"; //set PATH
+	TABLE_ENVAR[0].varvalue = getenv("PATH");
 	
-	table[1].varname = "HOME"; //set HOME
-	table[1].varvalue = getenv("HOME");
+	TABLE_ENVAR[1].varname = "HOME"; //set HOME
+	TABLE_ENVAR[1].varvalue = getenv("HOME");
 
 	VARCOUNT = 2; 
 
@@ -36,28 +36,39 @@ static int getCommand(){
 }
 
 static void do_it(){
-	switch(builtin){
+	switch(BUILT_IN){
 		case BYE: 
 			RUNNING = 0;
 			printf("Bye!!! \n");
 			break; 
+
 		case SETENV: 
-			break; 
-		case UNSETENV: 
 			break;
+
+		case UNSETENV:
+			printf("\t Unset Env selected \n"); 
+			break;
+
 		case PRINTENV: 
+			printf("\t Print Env selected \n");
 			break; 
+
 		case ALIAS: 
+			printf("\t Alias selected \n");
 			break;
-		case UNALIAS: 
+
+		case UNALIAS:
+			printf("\t Unalias selected \n"); 
 			break; 
+
 		case CD:
+			printf("\t CD selected \n");
 			break;
 	}
 }
 
 static void processCommand(){
-	if (builtin){
+	if (BUILT_IN){
 		do_it();
 	}
 	else 
@@ -81,8 +92,6 @@ int main(void){
 		}
 	}
 	printf("\n\nGood bye!! \n\n");
-	// printf("Env path is %s, value is %s", table[0].varname, table[0].varvalue);
-	// printf("Max variable count is %d", VARCOUNT);
 	return 0; 
 }
 
