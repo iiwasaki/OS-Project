@@ -13,11 +13,6 @@ int yywrap()
 	return 1;
 }
 
-main()
-{	
-	yyparse();
-}
-
 %}
 
 %token METACHARACTER SETENV PRINTENV UNSETENV CD ALIAS UNALIAS BYE NEWLINE
@@ -80,27 +75,28 @@ setenv:
 
 
 bye: 
-	BYE 
+	BYE NEWLINE
 	{
 		printf("\t Bye back!! \n");
 	}
 	;
 	
 printenv: 
-	PRINTENV 
+	PRINTENV NEWLINE
 	{
 		printf("\t Print Env selected \n");
+		return OK;
 	}
 	;
 	
 unsetenv: 	
-	UNSETENV 
+	UNSETENV NEWLINE 
 	{
 		printf("\t Unset Env selected \n");
 	}
 	;
 cd:
-	CD 
+	CD NEWLINE
 	{
 		printf("\t CD selected \n");
 	}
