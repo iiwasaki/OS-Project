@@ -77,7 +77,8 @@ setenv:
 bye: 
 	BYE NEWLINE
 	{
-		printf("\t Bye back!! \n");
+		builtin = BYE; 
+		YYACCEPT;
 	}
 	;
 	
@@ -85,7 +86,7 @@ printenv:
 	PRINTENV NEWLINE
 	{
 		printf("\t Print Env selected \n");
-		return OK;
+		YYACCEPT; 
 	}
 	;
 	
