@@ -6,6 +6,8 @@
 
 extern int yyparse();
 extern int yylex();
+extern int yylex_destroy(); 
+extern int yy_scan_string();
 
 static void printPrompt(){
 	printf("\n>> ");
@@ -25,6 +27,7 @@ static void shell_init(){
 
 	VARCOUNT = 2; 
 
+	ALIASCOUNT = 0; 
 	RUNNING = 1; 
 }
 
@@ -32,7 +35,6 @@ static void shell_init(){
 static int getCommand(){ 
 	if(yyparse())
 	{
-		printf("Error in yyparse\n");
 		return SYSERR; 
 	}
 	else 
@@ -44,7 +46,7 @@ static void printenv(){
 	int i = 0;
 	printf("Printing all environment variables: \n\n"); 
 	for (; i<VARCOUNT; ++i){
-		printf("%s: %s \n", TABLE_ENVAR[i].varname, TABLE_ENVAR[i].varvalue);
+		printf("%s = %s \n", TABLE_ENVAR[i].varname, TABLE_ENVAR[i].varvalue);
 	}
 }
 
@@ -83,6 +85,7 @@ void setenviro(char* var_name, char* var_value){
 	}
 } 
 
+/*unset environment variable */
 static void unsetenviro(char* var_name)
 { int i = 0; 
 	int found = -1; //not found
@@ -93,7 +96,7 @@ static void unsetenviro(char* var_name)
 					int j = i;
 					for (; j<VARCOUNT;j++){
 						TABLE_ENVAR[j].varname = TABLE_ENVAR[j+1].varname; 
-						TABLE_ENVAR[j].varvalue = TABLE_ENVAR[j+1].varname;
+						TABLE_ENVAR[j].varvalue = TABLE_ENVAR[j+1].varvalue;
 					}
 					TABLE_ENVAR[VARCOUNT-1].varname = NULL; 
 					TABLE_ENVAR[VARCOUNT-1].varvalue = NULL;
@@ -108,6 +111,96 @@ static void unsetenviro(char* var_name)
 	}
 
 }
+
+
+/* Create an alias if one does not exist. If it does, overwrite. */
+static void setalias( char* alias_name, char* alias_value){
+	int i =0;
+	int aliasID = -1; //default "does not exist"  
+	for ( ; i < ALIASCOUNT; ++i){
+		if (strcmp(alias_name, TABLE_ALIAS[i].aliasname) == 0){
+			aliasID = i; 
+			break; 
+		}
+	}
+
+	/* if the alias is to be overwritten */
+	if (aliasID != -1){
+		TABLE_ALIAS[aliasID].aliasvalue = alias_value;
+		printf("Alias %s successfully updated.\n", TABLE_ALIAS[aliasID].aliasname);
+	}
+	/* if the alias is new */
+	else {
+		/* make sure there is space in the alias count */
+		if (ALIASCOUNT < MAXALIAS){
+			/* IF THERE IS SPACE */
+			TABLE_ALIAS[ALIASCOUNT].aliasname = alias_name; 
+			TABLE_ALIAS[ALIASCOUNT].aliasvalue = alias_value;
+			TABLE_ALIAS[ALIASCOUNT].appeared = 0; 
+
+			ALIASCOUNT++; 
+			printf("New alias successfully created.\n ");
+		}
+		else {
+			/* NO SPACE */
+			printf ("Max number of aliases reached. \n");
+		}
+
+	}
+}
+/* list all aliases */
+static void listalias(){
+	int i = 0;
+	/* make sure there are aliases to show */
+	if (ALIASCOUNT > 0 ){
+			printf("Printing all aliases: \n\n"); 
+	for (; i<ALIASCOUNT; ++i){
+		printf("%s = %s \n", TABLE_ALIAS[i].aliasname, TABLE_ALIAS[i].aliasvalue);
+		}
+	}
+	else 
+	{
+		printf("No aliases made. \n");
+	}
+
+}
+
+/*unset the alias set */
+static void unsetalias(char* alias_name)
+{ 	int i = 0; 
+	int found = -1; //default alias not found 
+	for(; i < ALIASCOUNT; i++) 
+		{ 
+			if(strcmp(alias_name, TABLE_ALIAS[i].aliasname) == 0)
+				{ 
+					int j = i;
+					for (; j<ALIASCOUNT;j++){
+						TABLE_ALIAS[j].aliasname = TABLE_ALIAS[j+1].aliasname; 
+						TABLE_ALIAS[j].aliasvalue = TABLE_ALIAS[j+1].aliasvalue;
+					}
+					TABLE_ALIAS[ALIASCOUNT-1].aliasname = NULL; 
+					TABLE_ALIAS[ALIASCOUNT-1].aliasvalue = NULL;
+					ALIASCOUNT--;
+					found = 1; 
+					printf("Unalias is done successfully\n");
+					break; 
+				} 
+		}
+	if (found != 1){
+		printf("\t ERRORRR! CAN'T FIND!!! \n"); 
+	}
+
+}
+
+/*reset the value of all aliases to unused */
+static void resetalias(){
+	int i = 0; 
+	for (; i<ALIASCOUNT; i++){
+		TABLE_ALIAS[i].appeared = 0;
+	}
+}
+
+
 
 static void do_it(){
 	switch(BUILT_IN){
@@ -129,11 +222,15 @@ static void do_it(){
 			break; 
 
 		case ALIAS: 
-			printf("\t Alias selected \n");
+			setalias(ALIAS_ARGS.args[0], ALIAS_ARGS.args[1]);
+			break;
+
+		case ALIASSHOW: 
+			listalias();
 			break;
 
 		case UNALIAS:
-			printf("\t Unalias selected \n"); 
+			unsetalias(ALIAS_ARGS.args[0]);
 			break; 
 
 		case CD:
@@ -146,6 +243,18 @@ static void processCommand(){
 	if (BUILT_IN){
 		do_it();
 	}
+	else if (ISALIAS){
+		yy_scan_string(alias_to_be_run);
+		switch(getCommand()){
+			case OK:
+				processCommand();
+				break;
+			case SYSERR:
+				printf("Syserr\n");
+				break;
+		}
+		yylex_destroy();
+	}
 	else 
 	{
 		printf("Do nothing for now ");
@@ -156,6 +265,7 @@ int main(void){
 	shell_init();
 
 	while(RUNNING){
+		BUILT_IN = ISALIAS = 0;
 		printPrompt(); 
 		switch ( getCommand()){
 			case OK:
@@ -164,6 +274,9 @@ int main(void){
 			case SYSERR:
 				printf("Syserr\n");
 				break;
+		}
+		if (ISALIAS == 1){
+			resetalias();
 		}
 	}
 	printf("\n\nGood bye!! \n\n");
