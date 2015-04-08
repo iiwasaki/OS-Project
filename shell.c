@@ -6,6 +6,7 @@
 
 extern int yyparse();
 extern int yylex();
+extern int chdir(const char *path);
 
 static void printPrompt(){
 	printf("\n>> ");
@@ -23,7 +24,10 @@ static void shell_init(){
 	TABLE_ENVAR[1].varname = "HOME"; //set HOME
 	TABLE_ENVAR[1].varvalue = getenv("HOME");
 
-	VARCOUNT = 2; 
+	TABLE_ENVAR[2].varname = "CURRENT WORKING DIRECTORY"; //set current working directory
+	TABLE_ENVAR[2].varvalue = getenv("HOME"); 
+
+	VARCOUNT = 3; 
 
 	RUNNING = 1; 
 }
@@ -32,8 +36,7 @@ static void shell_init(){
 static int getCommand(){ 
 	if(yyparse())
 	{
-		printf("Error in yyparse\n");
-		return SYSERR; 
+		return SYSERR;
 	}
 	else 
 		return OK; 
@@ -42,9 +45,9 @@ static int getCommand(){
 /* Print all environment variables */
 static void printenv(){
 	int i = 0;
-	printf("Printing all environment variables: \n\n"); 
+	printf("Printing all environment variables: \n"); 
 	for (; i<VARCOUNT; ++i){
-		printf("%s: %s \n", TABLE_ENVAR[i].varname, TABLE_ENVAR[i].varvalue);
+		printf("\n%s: %s \n", TABLE_ENVAR[i].varname, TABLE_ENVAR[i].varvalue);
 	}
 }
 
@@ -109,11 +112,27 @@ static void unsetenviro(char* var_name)
 
 }
 
+static void change_directory(char *directory_path)
+{
+	if(!chdir(directory_path))
+	{
+		if(strcmp(directory_path, getenv("HOME")) == 0)
+		{
+			printf("You are already at home\n");
+		}
+		else
+		{setenviro("CURRENT WORKING DIRECTORY", directory_path);}
+	}
+	else
+	{
+		printf("Directory Not Found\n");
+	}
+}
+
 static void do_it(){
 	switch(BUILT_IN){
 		case BYE: 
 			RUNNING = 0;
-			printf("Bye!!! \n");
 			break; 
 
 		case SETENV: 
@@ -137,7 +156,7 @@ static void do_it(){
 			break; 
 
 		case CD:
-			printf("\t CD selected \n");
+			change_directory(CD_ARGS.args[0]);
 			break;
 	}
 }
@@ -162,7 +181,6 @@ int main(void){
 				processCommand(); 
 				break;
 			case SYSERR:
-				printf("Syserr\n");
 				break;
 		}
 	}

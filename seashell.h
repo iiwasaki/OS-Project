@@ -10,7 +10,7 @@ Yufan Lin and Ishin Iwasaki COP4600
 
 #define OK 0 
 #define SYSERR 1 
-#define MEMERR 2  //for lex 
+#define MEMERR 2  //for lex
 #define SYSCALLERR -1 
 
 #define BADFD -2 
@@ -33,6 +33,8 @@ typedef struct {
 
 ENVVAR TABLE_ENVAR[MAXENVS];
 ARGTAB ENV_ARGS;
+ARGTAB CD_ARGS;
+char *CURRENT_WORKING_DIRECTORY;
 int VARCOUNT;
 int BUILT_IN; 
 int RUNNING; 

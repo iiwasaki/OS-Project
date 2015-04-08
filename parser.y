@@ -2,6 +2,7 @@
 #include <stdio.h> 
 #include <string.h> 
 #include "seashell.h"
+#include <stdlib.h>
 
 void yyerror(const char *str) 
 {
@@ -75,8 +76,8 @@ setenv:
  		|
  		SETENV NEWLINE
  		{
- 			BUILT_IN = SETENV; 
-			YYACCEPT;
+			
+			YYABORT;
  		}
  		;
 
@@ -108,7 +109,15 @@ unsetenv:
 cd:
 	CD NEWLINE
 	{
-		BUILT_IN = CD; 
+		BUILT_IN = CD;
+		CD_ARGS.args[0] = getenv("HOME");
+		YYACCEPT;
+	}
+	|
+	CD WORD NEWLINE
+	{
+		BUILT_IN = CD;
+		CD_ARGS.args[0] = $2;
 		YYACCEPT;
 	}
 	;
