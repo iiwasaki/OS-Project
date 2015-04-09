@@ -45,7 +45,6 @@ ALIASES TABLE_ALIAS[MAXALIAS]; //table of aliases
 ARGTAB ENV_ARGS;
 ARGTAB ALIAS_ARGS; 
 ARGTAB CD_ARGS;
-char *CURRENT_WORKING_DIRECTORY; //stores current working directory
 
 char* alias_to_be_run; 
 
