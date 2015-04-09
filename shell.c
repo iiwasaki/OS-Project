@@ -8,6 +8,8 @@ extern int yyparse();
 extern int yylex();
 extern int yylex_destroy(); 
 extern int yy_scan_string();
+extern int chdir(const char *path);
+extern char **environ;  
 
 static void printPrompt(){
 	printf("\n>> ");
@@ -21,11 +23,18 @@ static void shell_init(){
 
 	TABLE_ENVAR[0].varname = "PATH"; //set PATH
 	TABLE_ENVAR[0].varvalue = getenv("PATH");
-	
+
 	TABLE_ENVAR[1].varname = "HOME"; //set HOME
 	TABLE_ENVAR[1].varvalue = getenv("HOME");
 
-	VARCOUNT = 2; 
+	TABLE_ENVAR[2].varname = "CURRENT WORKING DIRECTORY"; //set current working directory
+	TABLE_ENVAR[2].varvalue = getenv("PWD");
+
+	chdir(getenv("PWD"));
+
+	CURRENT_WORKING_DIRECTORY = TABLE_ENVAR[2].varvalue; 
+
+	VARCOUNT = 3; 
 
 	ALIASCOUNT = 0; 
 	RUNNING = 1; 
@@ -44,10 +53,14 @@ static int getCommand(){
 /* Print all environment variables */
 static void printenv(){
 	int i = 0;
-	printf("Printing all environment variables: \n\n"); 
-	for (; i<VARCOUNT; ++i){
-		printf("%s = %s \n", TABLE_ENVAR[i].varname, TABLE_ENVAR[i].varvalue);
+	// printf("Printing all environment variables: \n\n"); 
+	// for (; i<VARCOUNT; ++i){
+	// 	printf("%s = %s \n", TABLE_ENVAR[i].varname, TABLE_ENVAR[i].varvalue);
+	// }
+	while(environ[i]){
+	  printf("%s\n", environ[i++]);
 	}
+
 }
 
 /* Set environment variable. Override if one exists, create a new one if it does not. */
@@ -64,7 +77,10 @@ void setenviro(char* var_name, char* var_value){
 	/* if the environment variable is to be overwritten */
 	if (envID != -1){
 		TABLE_ENVAR[envID].varvalue = var_value;
-		printf("Variable %s successfully updated.\n", TABLE_ENVAR[envID].varname);
+		int success = setenv(var_name, var_value, 1);
+		if (!success){
+			printf("Variable %s successfully updated.\n", TABLE_ENVAR[envID].varname);
+			}
 	}
 	/* if the environment variable is new */
 	else {
@@ -74,8 +90,13 @@ void setenviro(char* var_name, char* var_value){
 			TABLE_ENVAR[VARCOUNT].varname = var_name; 
 			TABLE_ENVAR[VARCOUNT].varvalue = var_value;
 
+			int success = setenv(var_name, var_value, 1);
+
 			VARCOUNT++; 
-			printf("New environment variable successfully created.\n ");
+			if (!success){
+				printf("New environment variable successfully created.\n ");
+
+			}
 		}
 		else {
 			/* NO SPACE */
@@ -102,6 +123,7 @@ static void unsetenviro(char* var_name)
 					TABLE_ENVAR[VARCOUNT-1].varvalue = NULL;
 					VARCOUNT--;
 					found = 1; 
+					unsetenv(var_name);
 					printf("Unset variable successfully\n");
 					break; 
 				} 
@@ -201,6 +223,28 @@ static void resetalias(){
 }
 
 
+/* Change directory */
+static void change_directory(char *directory_path)
+{
+if(!chdir(directory_path))
+{
+	if(strcmp(directory_path, CURRENT_WORKING_DIRECTORY) == 0)
+		{
+			printf("Current working directory is unchanged.\n");
+		}
+	else
+		{
+			setenviro("CURRENT WORKING DIRECTORY", directory_path);
+			CURRENT_WORKING_DIRECTORY = directory_path;
+		}
+}
+else
+	{
+	printf("Directory Not Found\n");
+	}
+}
+
+
 
 static void do_it(){
 	switch(BUILT_IN){
@@ -234,7 +278,7 @@ static void do_it(){
 			break; 
 
 		case CD:
-			printf("\t CD selected \n");
+			change_directory(CD_ARGS.args[0]);
 			break;
 	}
 }

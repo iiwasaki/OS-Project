@@ -6,7 +6,7 @@ Yufan Lin and Ishin Iwasaki COP4600
 #define MAXCMDS 35
 #define MAXARGS 100 
 #define MAXALIAS 100 
-#define MAXENVS 5
+#define MAXENVS 100
 #define MAXALIASLENGTH 100
 
 #define OK 0 
@@ -44,6 +44,8 @@ ALIASES TABLE_ALIAS[MAXALIAS]; //table of aliases
 
 ARGTAB ENV_ARGS;
 ARGTAB ALIAS_ARGS; 
+ARGTAB CD_ARGS;
+char *CURRENT_WORKING_DIRECTORY; //stores current working directory
 
 char* alias_to_be_run; 
 
