@@ -2,9 +2,25 @@
 #include <stdio.h> 
 #include <string.h>
 #include "y.tab.h"
+#include "seashell.h"
 %}
 
 %% 
+
+[^<>|"\& \n]*[$][{][^"\n{}]+[}][^<>|"\& \n]* 	{
+													const char st[3] = "${";
+													const char en[1] = "}";
+													char* start = strstr(yytext, &st[1]); 
+													char* end = strstr(yytext, en);
+													int distance = end-start; 
+													printf ("%d", distance); 
+													printf("%s\n", start);
+													char* subString = (char*)malloc(yyleng);
+													strncpy(subString, start+1, distance-1);
+													printf("%s", subString);
+													return WORD;
+
+												}
 
 ["][^"\n]*["] 				{
 								int counter = 0;
