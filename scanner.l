@@ -9,16 +9,31 @@
 
 [^<>|"\& \n]*[$][{][^"\n{}]+[}][^<>|"\& \n]* 	{
 													const char st[3] = "${";
-													const char en[1] = "}";
+													const char en[2] = "}";
 													char* start = strstr(yytext, &st[1]); 
-													char* end = strstr(yytext, en);
+													char* end = strstr(yytext, &en[0]);
 													int distance = end-start; 
 													printf ("%d", distance); 
-													printf("%s\n", start);
+													printf("start: %s\n", start);
+													printf("end: %s\n", end);
 													char* subString = (char*)malloc(yyleng);
 													strncpy(subString, start+1, distance-1);
 													printf("%s", subString);
-													return WORD;
+													
+													int distToStart = start - yytext; 
+													char* temp = (char*)malloc(distToStart);
+													strncpy(temp, yytext, distToStart-1);
+													printf("\n%s",temp);
+													int i = 0;
+													for(; i<VARCOUNT; ++i)
+													{
+														if (strcmp(subString, TABLE_ENVAR[i].varname) == 0)
+														{	
+															
+															return WORD; 
+														}
+													}
+
 
 												}
 

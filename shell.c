@@ -9,10 +9,31 @@ extern int yylex();
 extern int yylex_destroy(); 
 extern int yy_scan_string();
 extern int chdir(const char *path);
+extern char* getcwd();
 extern char **environ;  
 
 static void printPrompt(){
 	printf("\n>> ");
+}
+
+/* at initialization, 
+create a local copy of the environment variables that can be scrolled through for
+expansion later */
+static void initialize_envs(){
+	int i = 0;
+		while(environ[i]){
+		const char eq[1] = "="; //all env vars are separated by name=value, therefore limit by '='
+		char* ending = strstr(environ[i], eq);
+		int dist = ending - environ[i]; //find distance between start and =, to get name 
+		char* subString = (char*)malloc(dist); //allocate enough space to store name 
+		strncpy(subString, environ[i], dist); //the subString now holds the name of the env var
+
+		TABLE_ENVAR[i].varname = subString; //set the name in the local TABLE_ENVAR to be subString
+		TABLE_ENVAR[i].varvalue = getenv(subString);  //use the name to get the value
+		VARCOUNT++; //increment local count of env vars
+	  	
+	  	i += 1; //increment i for the while loop
+	}
 }
 
 /* initialize the shell */
@@ -21,20 +42,11 @@ static void shell_init(){
 	printf("|   Welcome to the shell!  |\n");
 	printf("----------------------------\n");
 
-	TABLE_ENVAR[0].varname = "PATH"; //set PATH
-	TABLE_ENVAR[0].varvalue = getenv("PATH");
+	//initialize environment variables
+	initialize_envs();
 
-	TABLE_ENVAR[1].varname = "HOME"; //set HOME
-	TABLE_ENVAR[1].varvalue = getenv("HOME");
-
-	TABLE_ENVAR[2].varname = "CURRENT WORKING DIRECTORY"; //set current working directory
-	TABLE_ENVAR[2].varvalue = getenv("PWD");
-
+	//set present working directory
 	chdir(getenv("PWD"));
-
-	CURRENT_WORKING_DIRECTORY = TABLE_ENVAR[2].varvalue; 
-
-	VARCOUNT = 3; 
 
 	ALIASCOUNT = 0; 
 	RUNNING = 1; 
@@ -53,12 +65,16 @@ static int getCommand(){
 /* Print all environment variables */
 static void printenv(){
 	int i = 0;
-	// printf("Printing all environment variables: \n\n"); 
+	printf("Printing all environment variables: \n\n"); 
+
+	/* EITHER ONE BELOW WORKS */
+
 	// for (; i<VARCOUNT; ++i){
 	// 	printf("%s = %s \n", TABLE_ENVAR[i].varname, TABLE_ENVAR[i].varvalue);
 	// }
+
 	while(environ[i]){
-	  printf("%s\n", environ[i++]);
+	   	printf("%s\n", environ[i++]);
 	}
 
 }
@@ -228,14 +244,13 @@ static void change_directory(char *directory_path)
 {
 if(!chdir(directory_path))
 {
-	if(strcmp(directory_path, CURRENT_WORKING_DIRECTORY) == 0)
+	if(strcmp(directory_path, getenv("PWD")) == 0)
 		{
 			printf("Current working directory is unchanged.\n");
 		}
 	else
 		{
-			setenviro("CURRENT WORKING DIRECTORY", directory_path);
-			CURRENT_WORKING_DIRECTORY = directory_path;
+			setenviro("PWD", getcwd());
 		}
 }
 else
