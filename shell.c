@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "y.tab.h"
+#include <dirent.h>
 
 extern int yyparse();
 extern int yylex();
@@ -18,20 +19,21 @@ static void printPrompt(){
 
 /* at initialization, 
 create a local copy of the environment variables that can be scrolled through for
-expansion later */
+expansion later*/
 static void initialize_envs(){
+	VARCOUNT = 0;
 	int i = 0;
 		while(environ[i]){
-		const char eq[1] = "="; //all env vars are separated by name=value, therefore limit by '='
-		char* ending = strstr(environ[i], eq);
-		int dist = ending - environ[i]; //find distance between start and =, to get name 
-		char* subString = (char*)malloc(dist); //allocate enough space to store name 
-		strncpy(subString, environ[i], dist); //the subString now holds the name of the env var
+		 const char* eq = "="; //all env vars are separated by name=value, therefore limit by '='
+		 char* ending = malloc(strlen(environ[i]));  
+		 ending = strstr(environ[i], &eq[0]);
+		 int dist = ending - environ[i]; //find distance between start and =, to get name 
+		 char* subString = (char*)malloc(dist); //allocate enough space to store name 
+		 strncpy(subString, environ[i], dist); //the subString now holds the name of the env var
 
-		TABLE_ENVAR[i].varname = subString; //set the name in the local TABLE_ENVAR to be subString
-		TABLE_ENVAR[i].varvalue = getenv(subString);  //use the name to get the value
-		VARCOUNT++; //increment local count of env vars
-	  	
+		 TABLE_ENVAR[i].varname = subString; //set the name in the local TABLE_ENVAR to be subString
+		 TABLE_ENVAR[i].varvalue = getenv(subString);  //use the name to get the value
+		 VARCOUNT++; //increment local count of env vars
 	  	i += 1; //increment i for the while loop
 	}
 }
@@ -69,13 +71,13 @@ static void printenv(){
 
 	/* EITHER ONE BELOW WORKS */
 
-	// for (; i<VARCOUNT; ++i){
-	// 	printf("%s = %s \n", TABLE_ENVAR[i].varname, TABLE_ENVAR[i].varvalue);
-	// }
-
-	while(environ[i]){
-	   	printf("%s\n", environ[i++]);
+	for (; i<VARCOUNT; ++i){
+		printf("%s = %s \n", TABLE_ENVAR[i].varname, TABLE_ENVAR[i].varvalue);
 	}
+
+	// while(environ[i]){
+	//    	printf("%s\n", environ[i++]);
+	// }
 
 }
 
@@ -241,21 +243,34 @@ static void resetalias(){
 /* Change directory */
 static void change_directory(char *directory_path)
 {
-if(!chdir(directory_path))
-{
-	if(strcmp(directory_path, getenv("PWD")) == 0)
-		{
-			printf("Current working directory is unchanged.\n");
-		}
+	if(!chdir(directory_path))
+	{
+		if(strcmp(directory_path, getenv("PWD")) == 0)
+			{
+				printf("Current working directory is unchanged.\n");
+			}
+		else
+			{
+				char* buffer = malloc(200);
+				char* cwd = getcwd(buffer, 200);
+				setenviro("PWD", cwd);
+
+				/*Listing all the file names in current working path*/
+				DIR *directory;
+				struct dirent *ent;
+				directory = opendir(cwd);
+				while((ent = readdir(directory)) != NULL)
+				{
+					if(strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0)
+						printf("%s\n", ent->d_name); 
+				}
+				closedir(directory);
+			}
+	}
 	else
 		{
-			setenviro("PWD", getcwd());
+			printf("cd: %s: No such file or directory.\n", directory_path);
 		}
-}
-else
-	{
-	printf("Directory Not Found\n");
-	}
 }
 
 static void do_it(){

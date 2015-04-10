@@ -85,7 +85,7 @@ setenv:
  			YYABORT; 
  		}
  		|
- 		error NEWLINE{ YYABORT;} 
+ 		error NEWLINE{ return 1;} 
  		;
 
 
@@ -95,7 +95,7 @@ bye:
 		BUILT_IN = BYE; 
 		YYACCEPT;
 	}
-	error NEWLINE{ YYABORT;} 
+	error NEWLINE{ return 1;} 
 
 		;
 	
@@ -105,7 +105,7 @@ printenv:
 		BUILT_IN = PRINTENV;
 		YYACCEPT;
 	} 		
-	error NEWLINE{ YYABORT;} 
+	error NEWLINE{ return 1;} 
 
 	;
 	
@@ -116,7 +116,7 @@ unsetenv:
 		ENV_ARGS.args[0] = $2;
 		YYACCEPT;
 	}
- 	error NEWLINE{ YYABORT;} 
+ 	error NEWLINE{ return 1;} 
 
 	;
 cd:
@@ -133,7 +133,7 @@ cd:
 		CD_ARGS.args[0] = $2;
 		YYACCEPT;
 	}
-	error NEWLINE{YYABORT;}
+	error NEWLINE{return 1;}
 ;
 
 
