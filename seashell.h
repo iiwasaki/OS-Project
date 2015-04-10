@@ -11,7 +11,7 @@ Yufan Lin and Ishin Iwasaki COP4600
 
 #define OK 0 
 #define SYSERR 1 
-#define MEMERR 2  //for lex 
+#define MEMERR 2  //for lex
 #define SYSCALLERR -1 
 
 #define BADFD -2 

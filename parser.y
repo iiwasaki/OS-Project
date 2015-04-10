@@ -3,6 +3,7 @@
 #include <string.h> 
 #include <stdlib.h>
 #include "seashell.h"
+#include <stdlib.h>
 
 void yyerror(const char *str) 
 {
@@ -81,7 +82,7 @@ setenv:
  		SETENV NEWLINE
  		{
  			yyerror("No arguments for setenv operation.");
- 			return 1; 
+ 			YYABORT; 
  		}
  		|
  		error NEWLINE{ return 1;} 
