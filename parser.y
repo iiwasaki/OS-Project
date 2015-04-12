@@ -239,42 +239,50 @@ cmdword:
 			printf("Setty selected\n");
 			TABLE_COMMAND[COMCOUNT].name = "SETENV";
 			TABLE_COMMAND[COMCOUNT].builtcmd = SETENV; 
+			TABLE_COMMAND[COMCOUNT].isbuilt = 1; 
+
 			BUILT_IN = 1; 
 		}
 		|
 		PRINTENV {
 			TABLE_COMMAND[COMCOUNT].name = "PRINTENV";
-			TABLE_COMMAND[COMCOUNT].builtcmd = PRINTENV; 
+			TABLE_COMMAND[COMCOUNT].builtcmd = PRINTENV;
+			TABLE_COMMAND[COMCOUNT].isbuilt = 1;  
 			BUILT_IN = 1; 
 		}
 		|
 		UNSETENV{
 			TABLE_COMMAND[COMCOUNT].name = "UNSETENV";
 			TABLE_COMMAND[COMCOUNT].builtcmd = UNSETENV; 
+			TABLE_COMMAND[COMCOUNT].isbuilt = 1; 
 			BUILT_IN = 1; 
 		}
 		|
 		CD {
 			TABLE_COMMAND[COMCOUNT].name = "CD";
 			TABLE_COMMAND[COMCOUNT].builtcmd = CD;
+			TABLE_COMMAND[COMCOUNT].isbuilt = 1; 
 			BUILT_IN = 1; 
 		}	
 		|
 		ALIAS {
 			TABLE_COMMAND[COMCOUNT].name = "ALIAS";
 			TABLE_COMMAND[COMCOUNT].builtcmd = ALIAS;
+			TABLE_COMMAND[COMCOUNT].isbuilt = 1; 
 			BUILT_IN = 1; 
 		}
 		|
 		UNALIAS {
 			TABLE_COMMAND[COMCOUNT].name = "UNALIAS";
 			TABLE_COMMAND[COMCOUNT].builtcmd = UNALIAS;
+			TABLE_COMMAND[COMCOUNT].isbuilt = 1; 
 			BUILT_IN = 1; 
 		}
 		|
 		BYE {
 			TABLE_COMMAND[COMCOUNT].name = "BYE";
-			TABLE_COMMAND[COMCOUNT].builtcmd = BYE; 
+			TABLE_COMMAND[COMCOUNT].builtcmd = BYE;
+			TABLE_COMMAND[COMCOUNT].isbuilt = 1;  
 			BUILT_IN = 1; 
 		}
 		|

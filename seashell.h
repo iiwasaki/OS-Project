@@ -47,6 +47,7 @@ typedef struct{
 	int outputfile; 
 	int argcount; 
 	int builtcmd; //the built in command
+	int isbuilt; //is it built flag
 	int pathtouse;
 	ARGTAB aptr; 
 
@@ -131,6 +132,10 @@ static void parsePaths(){
 static int isExecutable(){
 	int i = 0; 
 	for (; i<COMCOUNT; i++){
+		if(TABLE_COMMAND[i].isbuilt == 1 ){
+			continue;
+		}
+		else {
 		int error = -1;
 		char * slash; 
 		slash = strchr(TABLE_COMMAND[i].name, '/');
@@ -143,6 +148,7 @@ static int isExecutable(){
 				strcat(pathnm, TABLE_COMMAND[i].name);
 				int exists = access(pathnm, X_OK);
 				if (exists == 0){
+					printf("This is the exec path %s", patharray[j]);
 					TABLE_COMMAND[i].pathtouse = j;
 					error = 0;
 				} 
@@ -160,6 +166,8 @@ static int isExecutable(){
 			return -1; //error can't open
 
 		}
+		}
+
 	}
 	return 1; //everything is executable
 }
