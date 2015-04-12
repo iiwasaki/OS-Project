@@ -112,7 +112,7 @@ static void resetINTS(){
 }
 
 static void parsePaths(){
-	char copy[500];
+	char copy[5000];
 	strcpy(copy, getenv("PATH"));
 	char *token = strtok(copy, ":");
 	int i = 0;
