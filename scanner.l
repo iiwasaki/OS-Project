@@ -16,6 +16,8 @@ cd 							{wordcount++; return CD; }
 alias 						{wordcount++; return ALIAS; }
 bye 						{wordcount++; return BYE; }
 unalias 					{wordcount++; return UNALIAS; }
+"2>"						{wordcount++; return ERDIRECT;}
+"&1"						{wordcount++; return A1;}
 "<"							{wordcount++; return LESSTHAN; }
 ">"							{wordcount++; return GREATERTHAN; }
 "|"							{wordcount++; return PIPE; }
@@ -26,7 +28,8 @@ unalias 					{wordcount++; return UNALIAS; }
 \n 							return NEWLINE;
 
 
-([a-z]*(\\[\&<>|"\\])+[a-z]*)+		{ /* NEED TO TAKE CARE OF THIS */ yylval.string=strdup(yytext); return WORD; }
+([a-z]*(\\[\&<>|"\\])+[a-z]*)+		{ /* NEED TO TAKE CARE OF THIS */ yylval.string=strdup(yytext); 									
+									return WORD; }
 
 [^<>|"\& \n]*[$][{][^"\n{}]+[}][^<>|"\& \n]* 	{
 													const char st[3] = "${";
@@ -41,16 +44,13 @@ unalias 					{wordcount++; return UNALIAS; }
 													strncpy(subString, start+1, distance-1);
 													printf("%s", subString);
 													
-													int distToStart = start - yytext; 
-													char* temp = (char*)malloc(distToStart);
-													strncpy(temp, yytext, distToStart-1);
-													printf("\n%s",temp);
 													int i = 0;
 													for(; i<VARCOUNT; ++i)
 													{
 														if (strcmp(subString, TABLE_ENVAR[i].varname) == 0)
 														{	
-															
+															yytext = (char*) malloc(strlen(TABLE_ENVAR[i].varvalue));
+															strcpy(yytext, TABLE_ENVAR[i].varvalue);
 															return WORD; 
 														}
 													}

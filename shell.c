@@ -2,19 +2,26 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "y.tab.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 extern int yyrestart();
 extern int yyparse();
 extern int yylex();
 extern int yylex_destroy(); 
 extern int yy_scan_string();
+extern int yy_delete_buffer();
 extern int chdir(const char *path);
 extern char* getcwd();
 extern char **environ;  
+extern void yypush_buffer_state(int buffer);
+extern void yypop_buffer_state();
 
 static void printPrompt(){
-	printf("\n>> ");
+	printf("\n\n>> ");
 }
 
 /* at initialization, 
@@ -323,32 +330,40 @@ static void do_it(){
 			break; 
 
 		case SETENV:  
-			succ = setenviro(TABLE_COMMAND[currentCommand].aptr.args[0], TABLE_COMMAND[currentCommand].aptr.args[1]);
+			succ = setenviro(TABLE_COMMAND[currentCommand].aptr.args[1], TABLE_COMMAND[currentCommand].aptr.args[2]);
+			printPrompt();
 			break;
 
 		case UNSETENV:
-			succ = unsetenviro(TABLE_COMMAND[currentCommand].aptr.args[0]);
+			succ = unsetenviro(TABLE_COMMAND[currentCommand].aptr.args[1]);
+			printPrompt();
 			break;
 
 		case PRINTENV: 
 			printenv();
+			printPrompt();
 			break; 
 
 		case ALIAS: 
-			if(TABLE_COMMAND[currentCommand].aptr.args[0] == NULL){
+			if(TABLE_COMMAND[currentCommand].aptr.args[1] == NULL){
 				listalias();
+				printPrompt();
+
 			}
 			else {
-				succ = setalias(TABLE_COMMAND[currentCommand].aptr.args[0], TABLE_COMMAND[currentCommand].aptr.args[1]);
+				succ = setalias(TABLE_COMMAND[currentCommand].aptr.args[1], TABLE_COMMAND[currentCommand].aptr.args[2]);
+				printPrompt();
 				}
 			break;
 
 		case UNALIAS:
-			succ = unsetalias(TABLE_COMMAND[currentCommand].aptr.args[0]);
+			succ = unsetalias(TABLE_COMMAND[currentCommand].aptr.args[1]);
+			printPrompt();
 			break; 
 
 		case CD:
-			succ = change_directory(TABLE_COMMAND[currentCommand].aptr.args[0]);
+			succ = change_directory(TABLE_COMMAND[currentCommand].aptr.args[1]);
+			printPrompt();
 			break;
 	}
 }
@@ -358,10 +373,55 @@ static void execute(){
 		printf("Not executable");
 	}
 	else{
+		int firstin = dup(0);
+		int firstout = dup(1); 
+		int firsterr = dup(2);
+		inputrefile = outputrefile = errorrefile = 0; //reset the input files sanity check  
+
+		int pipefd[2*COMCOUNT];
+
+		int i=0;
+		for(i=0; i<COMCOUNT; i++){
+			if(pipe(pipefd+i*2)<0){
+				printf("Can't pipe");
+				return;
+			}
+		}
+
+		int c=0; //set up pipelines and fork
+
+
+		pid = 0; 
+		int status;
+		c=0;
+		int j=0;
+		if (outredir == 1){
+			if (isappend == 1){
+						outputrefile = open(ofile, O_WRONLY|O_CREAT|O_APPEND, 00600);
+							dup2(outputrefile, STDOUT_FILENO);
+						if (outputrefile == -1){
+							printf("\nError: output file is not writable.\n");
+							return; 
+						}
+					}
+
+					else 
+					{
+						outputrefile = open(ofile, O_WRONLY|O_CREAT|O_TRUNC, 00600);
+							dup2(outputrefile, STDOUT_FILENO);
+						if (outputrefile == -1){
+							printf("\nError: Output file is not writable.\n");
+							return;
+						}
+					}	
+				}
 		if (inredir == 1){
 			int sxs;
 			sxs = access(ifile, R_OK);
 			if (sxs == 0){
+				inputrefile = open(ifile, O_RDONLY);
+					dup2(inputrefile, STDIN_FILENO);
+
 				printf("Input is successful\n");
 			}
 			else {
@@ -369,19 +429,74 @@ static void execute(){
 				return;
 			}
 		}
-		if (outredir == 1){
-			int sxs;
-			sxs = access(ofile, W_OK);
-			if (sxs == 0){
-				printf("Output is successful\n");
+
+		if (errorredir == 1){
+				errorrefile = open(errorfile, O_WRONLY|O_CREAT|O_TRUNC, 00600);
+				if (errorrefile == -1){
+					printf("\nError: Error output file is not writable. \n");
+					return;
+				}
 			}
-			else {
-				printf("Output IO Not findable");
-				return;
+			else { //no error redirection
+				errorrefile = dup(STDERR_FILENO);
 			}
+		for(; c < COMCOUNT; c++){
+		
+			switch(pid = fork()){
+				case 0:
+					if(whichCommand(c) != LASTCOMMAND){
+						if(dup2(pipefd[j+1], 1) < 0){
+							printf("Close error\n");
+							return;
+						}
+					}
+
+					if(j != 0){
+						if(dup2(pipefd[j-2], 0) <0){
+							return;
+						}
+					}	
+
+					int q;
+					for (q=0; q<2*COMCOUNT; q++){
+						close(pipefd[q]);
+					}
+
+					if(TABLE_COMMAND[c].isbuilt){
+						do_it();
+						exit(0);
+					}
+
+						execvp(TABLE_COMMAND[c].name, TABLE_COMMAND[c].aptr.args);
+						_exit(1);
+					
+					break;
+				case -1: 
+					printf("Failed to fork!\n");
+					return; 
+			}
+			j+=2;
 		}
-		printf("Executable!");
+		for (i=0; i<2*COMCOUNT; i++){
+			close(pipefd[i]);
+		}
+		for(i=0; i<COMCOUNT+1;i++){
+			wait(&status);
+		}
+
+		dup2(firstin, 0);
+		dup2(firstout, 1);
+		dup2(firsterr, 2);
+
+		close(firstin);
+		close(firstout);
+		close (firsterr);
+		if(!doInBackground){
+			waitpid(pid, 0, 0);
+			printPrompt();
+		}
 	}
+
 }
 
 static void processCommand(){
@@ -391,6 +506,7 @@ static void processCommand(){
 			else if (ISALIAS){
 			printf("Got here");
 			strcat(str, "\n");
+			strcat(str, "\0");
 			yy_scan_string(str);
 			resetINTS();//reset aliasing and others. 
 			switch(getCommand()){
@@ -406,7 +522,6 @@ static void processCommand(){
 
 		else 
 		{
-			printf("Comm count is %d", COMCOUNT);
 			execute();
 		}
 }
@@ -416,11 +531,11 @@ static void cleartable(){
 	int i = 0;
 	for (; i < COMCOUNT; i++){
 		TABLE_COMMAND[i].name = NULL; 
-		TABLE_COMMAND[i].inputfile = 0;
-		TABLE_COMMAND[i].outputfile = 0; 
+		TABLE_COMMAND[i].ifd = 0;
+		TABLE_COMMAND[i].ofd = 0; 
 		TABLE_COMMAND[i].builtcmd = 0; 
 		int j = 0; 
-		for (; j<TABLE_COMMAND[i].argcount; j++){
+		for (; j<TABLE_COMMAND[i].argcount+1; j++){
 			TABLE_COMMAND[i].aptr.args[j] = NULL;
 		}
 		TABLE_COMMAND[i].argcount = 0;
@@ -429,13 +544,13 @@ static void cleartable(){
 
 int main(void){
 	shell_init();
+	printf("\n");
+	printPrompt();
 
 	while(RUNNING){
 		resetINTS();
-		printPrompt(); 
 		switch ( getCommand()){
 			case OK:
-				printf("CASE OK");
 				processCommand(); 
 				break;
 			case SYSERR:

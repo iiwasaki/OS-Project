@@ -22,6 +22,10 @@ Yufan Lin and Ishin Iwasaki COP4600
 #define BADFD -2 
 #define EOFILE 2 
 
+#define LASTCOMMAND -10
+#define ONLYCOMMAND -20
+#define FIRSTCOMMAND -30
+
 /*table of environment variables */
 typedef struct {
 	char *varname; 
@@ -43,8 +47,8 @@ typedef struct{
 /*Table of commands */
 typedef struct{ 
 	char* name;
-	int inputfile; 
-	int outputfile; 
+	int ifd; 
+	int ofd; 
 	int argcount; 
 	int builtcmd; //the built in command
 	int isbuilt; //is it built flag
@@ -53,12 +57,6 @@ typedef struct{
 
 } COMMANDS; 
 
-static void printcommand( COMMANDS command){
-	printf("Command name: %s", command.name);
-	printf("Command input? %d", command.inputfile);
-	printf("Command.out? %d", command.outputfile);
-	printf("How many arguments? %d", command.argcount);
-}
 
 ENVVAR TABLE_ENVAR[MAXENVS]; //table of environment variables
 ALIASES TABLE_ALIAS[MAXALIAS]; //table of aliases
@@ -81,8 +79,16 @@ int BUILT_IN; //is this a built in command?
 
 char* ifile; //input file to redirect to 
 char* ofile; //output file to redirect to 
+char* errorfile; //errpr file to redirect to 
 int inredir; //is there in/out redirection? 1= yes, 0 = no. 
 int outredir; 
+int errorredir;
+
+int inputrefile; 
+int outputrefile; 
+int errorrefile; 
+
+int isappend; //is the output file being appended? 
 
 int VARCOUNT; 	//number of environment variables 
 int ALIASCOUNT; //number of aliases
@@ -96,6 +102,8 @@ int wordcount;
 
 int erroneousCMD; 
 
+int pid; //process ID 
+
 int aliasmatch(char* name);
 int aliasnumber; //what number is the current alias? 
 char* furthestalias; //the deepest in the trail of aliases to be used
@@ -107,12 +115,13 @@ void addToParser(char* string);
 
 static void resetINTS(){
 	BUILT_IN = wordcount = ISALIAS = COMCOUNT = currentCommand = doInBackground = 
-	inredir = outredir = erroneousCMD = aliasnumber = 0;
+	inredir = outredir = errorredir = erroneousCMD = aliasnumber = inputrefile = outputrefile = errorrefile = 
+	isappend = 0;
 
 }
 
 static void parsePaths(){
-	char copy[500];
+	char copy[5000];
 	strcpy(copy, getenv("PATH"));
 	char *token = strtok(copy, ":");
 	int i = 0;
@@ -170,4 +179,24 @@ static int isExecutable(){
 
 	}
 	return 1; //everything is executable
+}
+
+static int whichCommand(int num){
+	if (num == COMCOUNT -1 ){ //last command
+		printf("This is command number %d and it is last command", num);
+		return LASTCOMMAND;
+	}
+	else if (num == 0 && COMCOUNT == 1){
+		printf("This is the only command. ");
+		return ONLYCOMMAND; 
+	}
+	else if (num ==0 && COMCOUNT > 1){
+		printf("This is the first command.");
+		return FIRSTCOMMAND;
+	}
+	return 0;
+}
+
+static void prepareArgs(){
+
 }

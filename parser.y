@@ -18,7 +18,7 @@ extern int yy_scan_string(char* string);
 
 %}
 
-%token SETENV PRINTENV UNSETENV CD ALIAS UNALIAS BYE NEWLINE LESSTHAN GREATERTHAN AMP PIPE ALERROR
+%token SETENV PRINTENV UNSETENV CD ALIAS UNALIAS BYE NEWLINE LESSTHAN GREATERTHAN AMP PIPE ALERROR ERDIRECT A1
 
 %union 
 {
@@ -36,7 +36,7 @@ commands: /*empty */
 		;
 
 command:
-		pipes input_redir output_redir background NEWLINE
+		pipes input_redir output_redir error_redir background NEWLINE
 		{
 			printf("Successfully piped. \n"); 
 			YYACCEPT;
@@ -46,6 +46,11 @@ command:
 		{
 			printf("This is alias yes\n");
 			printf("%d", ISALIAS);
+			YYACCEPT;
+		}
+		NEWLINE
+		{
+			printf("Newl");
 			YYACCEPT;
 		}
 		;
@@ -131,6 +136,7 @@ background:
 		AMP 
 		{
 			printf("This will run in the background. \n");
+			doInBackground = 1; 
 		}
 		|
 		/*empty*/
@@ -162,6 +168,7 @@ output_redir:
 		GREATERTHAN GREATERTHAN WORD 
 		{
 			printf("Output will be appended to %s\n", $3);
+			isappend = 1; 
 			ofile = $3;
 			outredir = 1;
 		}
@@ -169,6 +176,7 @@ output_redir:
 		GREATERTHAN GREATERTHAN LONGWORD
 		{
 			printf("Output will be appended to %s\n", $3);
+			isappend = 1; 
 			ofile = $3;
 			outredir = 1;
 		}
@@ -186,11 +194,44 @@ output_redir:
 			ofile = $2;
 			outredir = 1;
 		}
+		|
+		GREATERTHAN GREATERTHAN 
+		{
+			printf("Output error no file set\n");
+			YYABORT; 
+		}
+		|
 		GREATERTHAN 
 		{
 			printf("Output error no file set\n");
+			YYABORT; 
 		}
 		|
+		/*could be nothing*/
+		;
+error_redir: 
+		ERDIRECT WORD 
+		{
+			printf("Error redirection to %s", $2);
+			errorfile = $2;
+			errorredir = 1; 
+		}
+		|
+		ERDIRECT A1
+		{
+			printf("Default error redirection.\n");
+			errorredir = 0;
+		}
+		|
+		ERDIRECT
+		{
+			printf("Error: No error redirection file specified.\n");
+			YYABORT; 
+		}
+		|
+		{
+			printf("Def error\n");
+		}
 		/*could be nothing*/
 		;
 pipes: 
@@ -209,8 +250,8 @@ arguments:
 		
 argument:
 		WORD {
-				printf("Argument %d is %s\n", TABLE_COMMAND[COMCOUNT].argcount, $1);
-				TABLE_COMMAND[COMCOUNT].aptr.args[TABLE_COMMAND[COMCOUNT].argcount] = $1;
+				printf("Argument %d is %s\n", TABLE_COMMAND[COMCOUNT].argcount +1, $1);
+				TABLE_COMMAND[COMCOUNT].aptr.args[TABLE_COMMAND[COMCOUNT].argcount +1] = $1;
 				TABLE_COMMAND[COMCOUNT].argcount++; 
 			
 		}
@@ -218,7 +259,7 @@ argument:
 		|
 		LONGWORD
 		{
-				TABLE_COMMAND[COMCOUNT].aptr.args[TABLE_COMMAND[COMCOUNT].argcount] = $1;
+				TABLE_COMMAND[COMCOUNT].aptr.args[TABLE_COMMAND[COMCOUNT].argcount +1] = $1;
 				TABLE_COMMAND[COMCOUNT].argcount++; 			
 		}
 		;
@@ -226,20 +267,22 @@ argument:
 cmdword:
 		WORD {
 			TABLE_COMMAND[COMCOUNT].name=$1;
+			TABLE_COMMAND[COMCOUNT].aptr.args[0] = $1;
 			printf("Cmd is %s\n", $1);
 
 		}
 		|
 		LONGWORD{
 			TABLE_COMMAND[COMCOUNT].name=$1;
+			TABLE_COMMAND[COMCOUNT].aptr.args[0] = $1;
 			printf("Cmd longword is %s\n", $1);
 		}
 		|
 		SETENV {
-			printf("Setty selected\n");
 			TABLE_COMMAND[COMCOUNT].name = "SETENV";
 			TABLE_COMMAND[COMCOUNT].builtcmd = SETENV; 
 			TABLE_COMMAND[COMCOUNT].isbuilt = 1; 
+			TABLE_COMMAND[COMCOUNT].aptr.args[0] = "setenv";
 
 			BUILT_IN = 1; 
 		}
@@ -248,6 +291,7 @@ cmdword:
 			TABLE_COMMAND[COMCOUNT].name = "PRINTENV";
 			TABLE_COMMAND[COMCOUNT].builtcmd = PRINTENV;
 			TABLE_COMMAND[COMCOUNT].isbuilt = 1;  
+			TABLE_COMMAND[COMCOUNT].aptr.args[0] = "PRINTENV";
 			BUILT_IN = 1; 
 		}
 		|
@@ -255,6 +299,7 @@ cmdword:
 			TABLE_COMMAND[COMCOUNT].name = "UNSETENV";
 			TABLE_COMMAND[COMCOUNT].builtcmd = UNSETENV; 
 			TABLE_COMMAND[COMCOUNT].isbuilt = 1; 
+			TABLE_COMMAND[COMCOUNT].aptr.args[0] = "UNSETENV";
 			BUILT_IN = 1; 
 		}
 		|
@@ -262,6 +307,7 @@ cmdword:
 			TABLE_COMMAND[COMCOUNT].name = "CD";
 			TABLE_COMMAND[COMCOUNT].builtcmd = CD;
 			TABLE_COMMAND[COMCOUNT].isbuilt = 1; 
+			TABLE_COMMAND[COMCOUNT].aptr.args[0] = "CD";
 			BUILT_IN = 1; 
 		}	
 		|
@@ -269,6 +315,7 @@ cmdword:
 			TABLE_COMMAND[COMCOUNT].name = "ALIAS";
 			TABLE_COMMAND[COMCOUNT].builtcmd = ALIAS;
 			TABLE_COMMAND[COMCOUNT].isbuilt = 1; 
+			TABLE_COMMAND[COMCOUNT].aptr.args[0] = "ALIAS";
 			BUILT_IN = 1; 
 		}
 		|
@@ -276,6 +323,7 @@ cmdword:
 			TABLE_COMMAND[COMCOUNT].name = "UNALIAS";
 			TABLE_COMMAND[COMCOUNT].builtcmd = UNALIAS;
 			TABLE_COMMAND[COMCOUNT].isbuilt = 1; 
+			TABLE_COMMAND[COMCOUNT].aptr.args[0] = "UNALIAS";
 			BUILT_IN = 1; 
 		}
 		|
@@ -283,11 +331,8 @@ cmdword:
 			TABLE_COMMAND[COMCOUNT].name = "BYE";
 			TABLE_COMMAND[COMCOUNT].builtcmd = BYE;
 			TABLE_COMMAND[COMCOUNT].isbuilt = 1;  
+			TABLE_COMMAND[COMCOUNT].aptr.args[0] = "BYE";
 			BUILT_IN = 1; 
-		}
-		|
-		PIPE {
-			printf("Here I am pipe");
 		}
 		;
 

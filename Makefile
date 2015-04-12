@@ -1,4 +1,4 @@
-shell: y.tab.o lex.yy.o shell.o
+shell: y.tab.o lex.yy.o shell.o redir.h
 	gcc -o shell *.o
 
 shell.o: shell.c seashell.h 
