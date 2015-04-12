@@ -49,6 +49,8 @@ static void shell_init(){
 	//set present working directory
 	chdir(getenv("PWD"));
 
+	parsePaths();
+
 	ALIASCOUNT = 0; 
 	RUNNING = 1; 
 }
@@ -104,6 +106,9 @@ int setenviro(char* var_name, char* var_value){
 		TABLE_ENVAR[envID].varvalue = var_value;
 		int success = setenv(var_name, var_value, 1);
 		if (!success){
+			if (strcmp(var_name, "PATH") == 0){
+				parsePaths();
+			}
 			printf("Variable %s successfully updated.\n", TABLE_ENVAR[envID].varname);
 			return 1;
 			}
@@ -120,6 +125,9 @@ int setenviro(char* var_name, char* var_value){
 
 			VARCOUNT++; 
 			if (!success){
+				if(strcmp(var_name, "PATH") == 0){
+					parsePaths();
+				}
 				printf("New environment variable successfully created.\n ");
 				return 1;
 			}
@@ -345,10 +353,39 @@ static void do_it(){
 	}
 }
 
+static void execute(){
+	if (isExecutable() == -1){
+		printf("Not executable");
+	}
+	else{
+		if (inredir == 1){
+			int sxs;
+			sxs = access(ifile, R_OK);
+			if (sxs == 0){
+				printf("Input is successful\n");
+			}
+			else {
+				printf("IO Not findable");
+				return;
+			}
+		}
+		if (outredir == 1){
+			int sxs;
+			sxs = access(ofile, W_OK);
+			if (sxs == 0){
+				printf("Output is successful\n");
+			}
+			else {
+				printf("Output IO Not findable");
+				return;
+			}
+		}
+		printf("Executable!");
+	}
+}
+
 static void processCommand(){
-	for (currentCommand; currentCommand < COMCOUNT; currentCommand++) //iterate through each command in the table
-	{
-			if (BUILT_IN && COMCOUNT == 1 && ioredir == 0){
+			if (BUILT_IN && COMCOUNT == 1 && inredir == 0 && outredir == 0){
 			do_it();
 			}
 			else if (ISALIAS){
@@ -364,14 +401,14 @@ static void processCommand(){
 			case SYSERR:
 				printf("Syserr\n");
 				break;
-		}
-	}
+				}
+			} //end elseif 
 
 		else 
 		{
-			printf("Do nothing for now ");
+			printf("Comm count is %d", COMCOUNT);
+			execute();
 		}
-	}
 }
 
 /* Clears the command table */

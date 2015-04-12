@@ -140,11 +140,15 @@ input_redir:
 		LESSTHAN WORD 
 		{
 			printf("Input will be redirected to %s\n", $2);
+			ifile = $2;
+			inredir = 1;
 		}
 		| 
 		LESSTHAN LONGWORD
 		{
 			printf("Input will be redirected to %s\n", $2);
+			ifile = $2;
+			inredir = 1;
 		}
 		LESSTHAN 
 		{
@@ -155,14 +159,32 @@ input_redir:
 		;
 
 output_redir: 
+		GREATERTHAN GREATERTHAN WORD 
+		{
+			printf("Output will be appended to %s\n", $3);
+			ofile = $3;
+			outredir = 1;
+		}
+		|
+		GREATERTHAN GREATERTHAN LONGWORD
+		{
+			printf("Output will be appended to %s\n", $3);
+			ofile = $3;
+			outredir = 1;
+		}
+		|
 		GREATERTHAN WORD 
 		{
 			printf("Output will be redirected to %s\n", $2);
+			ofile = $2;
+			outredir = 1;
 		}
 		|
 		GREATERTHAN LONGWORD 
 		{
 			printf("Output will be redirected to %s\n",$2);
+			ofile = $2;
+			outredir = 1;
 		}
 		GREATERTHAN 
 		{
@@ -187,9 +209,9 @@ arguments:
 		
 argument:
 		WORD {
-						printf("Argument %d is %s\n", TABLE_COMMAND[COMCOUNT].argcount, $1);
-						TABLE_COMMAND[COMCOUNT].aptr.args[TABLE_COMMAND[COMCOUNT].argcount] = $1;
-						TABLE_COMMAND[COMCOUNT].argcount++; 
+				printf("Argument %d is %s\n", TABLE_COMMAND[COMCOUNT].argcount, $1);
+				TABLE_COMMAND[COMCOUNT].aptr.args[TABLE_COMMAND[COMCOUNT].argcount] = $1;
+				TABLE_COMMAND[COMCOUNT].argcount++; 
 			
 		}
 
@@ -203,11 +225,13 @@ argument:
 
 cmdword:
 		WORD {
+			TABLE_COMMAND[COMCOUNT].name=$1;
 			printf("Cmd is %s\n", $1);
 
 		}
 		|
 		LONGWORD{
+			TABLE_COMMAND[COMCOUNT].name=$1;
 			printf("Cmd longword is %s\n", $1);
 		}
 		|
