@@ -26,7 +26,29 @@ unalias 					{wordcount++; return UNALIAS; }
 \n 							return NEWLINE;
 
 
-([a-z]*(\\[\&<>|"\\])+[a-z]*)+		{ /* NEED TO TAKE CARE OF THIS */ yylval.string=strdup(yytext); return WORD; }
+([^<>|"\& \n]*(\\[\&<>|"\\])+[^<>|"\& \n]*)+	{ 	
+													char * str = (char * )malloc(yyleng);
+													char * pch;
+													int pos;
+													int i = 0;
+													str = yytext;
+
+													pch=strchr(str,'\\');
+													while (pch!=NULL)
+													{
+														i++;
+														pos = pch-str+1;
+														for(;pos<=yyleng;++pos)
+														{
+															str[pos-1] = str[pos];
+														}
+										    			pch=strchr(pch+1,'\\');
+													}
+
+													yytext = str;
+													yylval.string=strdup(yytext);
+									  				return WORD; 
+												}
 
 [^<>|"\& \n]*[$][{][^"\n{}]+[}][^<>|"\& \n]* 	{
 													const char st[3] = "${";

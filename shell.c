@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "y.tab.h"
+#include "wildcard.h"
 
 extern int yyrestart();
 extern int yyparse();
@@ -45,6 +46,8 @@ static void shell_init(){
 
 	//initialize environment variables
 	initialize_envs();
+
+	list_file_names("l?x.*.*");
 
 	//set present working directory
 	chdir(getenv("PWD"));
