@@ -4,6 +4,7 @@
 #include <string.h>
 #include "y.tab.h"
 
+extern int yyrestart();
 extern int yyparse();
 extern int yylex();
 extern int yylex_destroy(); 
@@ -21,9 +22,9 @@ create a local copy of the environment variables that can be scrolled through fo
 expansion later */
 static void initialize_envs(){
 	int i = 0;
-		while(environ[i]){
-		const char eq[1] = "="; //all env vars are separated by name=value, therefore limit by '='
-		char* ending = strstr(environ[i], eq);
+		while(environ[i]){   
+		const char* eq = "="; //all env vars are separated by name=value, therefore limit by '='
+		char* ending = strstr(environ[i], &eq[0]);
 		int dist = ending - environ[i]; //find distance between start and =, to get name 
 		char* subString = (char*)malloc(dist); //allocate enough space to store name 
 		strncpy(subString, environ[i], dist); //the subString now holds the name of the env var
@@ -38,9 +39,9 @@ static void initialize_envs(){
 
 /* initialize the shell */
 static void shell_init(){ 
-	printf("\n----------------------------\n");
-	printf("|   Welcome to the shell!  |\n");
-	printf("----------------------------\n");
+	printf("\n--------------------------\n");
+	printf("|   Welcome to the shell! |\n");
+	printf("---------------------------\n");
 
 	//initialize environment variables
 	initialize_envs();
@@ -80,8 +81,16 @@ static void printenv(){
 }
 
 /* Set environment variable. Override if one exists, create a new one if it does not. */
-void setenviro(char* var_name, char* var_value){
+int setenviro(char* var_name, char* var_value){
 	int i =0;
+	if (var_name == NULL){
+		printf("Error on setenv: No variable name specified.\n");
+		return 0;
+	}
+	if (var_value == NULL){
+		printf("Error on setenv: No variable value specified.\n");
+		return 0;
+	}
 	int envID = -1; //default "does not exist"  
 	for ( ; i < VARCOUNT; ++i){
 		if (strcmp(var_name, TABLE_ENVAR[i].varname) == 0){
@@ -96,6 +105,7 @@ void setenviro(char* var_name, char* var_value){
 		int success = setenv(var_name, var_value, 1);
 		if (!success){
 			printf("Variable %s successfully updated.\n", TABLE_ENVAR[envID].varname);
+			return 1;
 			}
 	}
 	/* if the environment variable is new */
@@ -111,20 +121,26 @@ void setenviro(char* var_name, char* var_value){
 			VARCOUNT++; 
 			if (!success){
 				printf("New environment variable successfully created.\n ");
-
+				return 1;
 			}
 		}
 		else {
 			/* NO SPACE */
 			printf ("Max number of environment variables reached. \n");
+			return 0;
 		}
 
 	}
+	return 0; 
 } 
 
 /*unset environment variable */
-static void unsetenviro(char* var_name)
+int unsetenviro(char* var_name)
 { int i = 0; 
+	if (var_name == NULL){
+		printf("Unset env error: No variable name specified.\n");
+		return 0;
+	}
 	int found = -1; //not found
 	for(; i < VARCOUNT; i++) 
 		{ 
@@ -141,18 +157,23 @@ static void unsetenviro(char* var_name)
 					found = 1; 
 					unsetenv(var_name);
 					printf("Unset variable successfully\n");
-					break; 
+					return 1; 
 				} 
 		}
 	if (found != 1){
-		printf("\t ERRORRR! CAN'T FIND!!! \n"); 
+		printf("Error: Cannot find specified variable. \n");
+		return 0; 
 	}
-
+	return 0;
 }
 
 
 /* Create an alias if one does not exist. If it does, overwrite. */
-static void setalias( char* alias_name, char* alias_value){
+int setalias( char* alias_name, char* alias_value){
+	if (alias_value == NULL){
+		printf("Error: Alias value is not specified.\n");
+		return 0; 
+	}
 	int i =0;
 	int aliasID = -1; //default "does not exist"  
 	for ( ; i < ALIASCOUNT; ++i){
@@ -166,6 +187,7 @@ static void setalias( char* alias_name, char* alias_value){
 	if (aliasID != -1){
 		TABLE_ALIAS[aliasID].aliasvalue = alias_value;
 		printf("Alias %s successfully updated.\n", TABLE_ALIAS[aliasID].aliasname);
+		return 1; 
 	}
 	/* if the alias is new */
 	else {
@@ -178,10 +200,12 @@ static void setalias( char* alias_name, char* alias_value){
 
 			ALIASCOUNT++; 
 			printf("New alias successfully created.\n ");
+			return 1; 
 		}
 		else {
 			/* NO SPACE */
 			printf ("Max number of aliases reached. \n");
+			return 0;
 		}
 
 	}
@@ -204,8 +228,13 @@ static void listalias(){
 }
 
 /*unset the alias set */
-static void unsetalias(char* alias_name)
-{ 	int i = 0; 
+int unsetalias(char* alias_name)
+{ 	
+	if (alias_name == NULL){
+		printf("Unalias error: No alias specified. \n");
+		return 0;
+	}
+	int i = 0; 
 	int found = -1; //default alias not found 
 	for(; i < ALIASCOUNT; i++) 
 		{ 
@@ -221,12 +250,15 @@ static void unsetalias(char* alias_name)
 					ALIASCOUNT--;
 					found = 1; 
 					printf("Unalias is done successfully\n");
+					return 1;
 					break; 
 				} 
 		}
 	if (found != 1){
-		printf("\t ERRORRR! CAN'T FIND!!! \n"); 
+		printf("Error: Cannot find the alias to unalias. \n");
+		return 0; 
 	}
+	return 0;
 
 }
 
@@ -236,44 +268,58 @@ static void resetalias(){
 	for (; i<ALIASCOUNT; i++){
 		TABLE_ALIAS[i].appeared = 0;
 	}
+	furthestalias = NULL;
+	aliasnumber = 0;
 }
 
 
 /* Change directory */
-static void change_directory(char *directory_path)
+int change_directory(char *directory_path)
 {
-if(!chdir(directory_path))
-{
+	if (directory_path == NULL){
+		chdir(getenv("HOME"));
+		char* buff = malloc(400);
+		setenviro("PWD", getcwd(buff, 400));
+		printf("Changed to HOME directory. \n");
+		return 1; 
+	}
+	if(!chdir(directory_path))
+	{
 	if(strcmp(directory_path, getenv("PWD")) == 0)
 		{
 			printf("Current working directory is unchanged.\n");
+			return 0;
 		}
 	else
 		{
-			setenviro("PWD", getcwd());
+			char* buff = malloc(400);
+			setenviro("PWD", getcwd(buff, 400));
+			return 1; 
 		}
+		return 0;
 }
 else
 	{
 	printf("Directory Not Found\n");
+	return 0;
 	}
 }
 
 
 
 static void do_it(){
-	switch(BUILT_IN){
+	switch(TABLE_COMMAND[currentCommand].builtcmd){
 		case BYE: 
 			RUNNING = 0;
 			printf("Bye!!! \n");
 			break; 
 
-		case SETENV: 
-			setenviro(ENV_ARGS.args[0], ENV_ARGS.args[1]);
+		case SETENV:  
+			succ = setenviro(TABLE_COMMAND[currentCommand].aptr.args[0], TABLE_COMMAND[currentCommand].aptr.args[1]);
 			break;
 
 		case UNSETENV:
-			unsetenviro(ENV_ARGS.args[0]);
+			succ = unsetenviro(TABLE_COMMAND[currentCommand].aptr.args[0]);
 			break;
 
 		case PRINTENV: 
@@ -281,42 +327,66 @@ static void do_it(){
 			break; 
 
 		case ALIAS: 
-			setalias(ALIAS_ARGS.args[0], ALIAS_ARGS.args[1]);
-			break;
-
-		case ALIASSHOW: 
-			listalias();
+			if(TABLE_COMMAND[currentCommand].aptr.args[0] == NULL){
+				listalias();
+			}
+			else {
+				succ = setalias(TABLE_COMMAND[currentCommand].aptr.args[0], TABLE_COMMAND[currentCommand].aptr.args[1]);
+				}
 			break;
 
 		case UNALIAS:
-			unsetalias(ALIAS_ARGS.args[0]);
+			succ = unsetalias(TABLE_COMMAND[currentCommand].aptr.args[0]);
 			break; 
 
 		case CD:
-			change_directory(CD_ARGS.args[0]);
+			succ = change_directory(TABLE_COMMAND[currentCommand].aptr.args[0]);
 			break;
 	}
 }
 
 static void processCommand(){
-	if (BUILT_IN){
-		do_it();
-	}
-	else if (ISALIAS){
-		yy_scan_string(alias_to_be_run);
-		switch(getCommand()){
+	for (currentCommand; currentCommand < COMCOUNT; currentCommand++) //iterate through each command in the table
+	{
+			if (BUILT_IN && COMCOUNT == 1 && ioredir == 0){
+			do_it();
+			}
+			else if (ISALIAS){
+			printf("Got here");
+			strcat(str, "\n");
+			yy_scan_string(str);
+			resetINTS();//reset aliasing and others. 
+			switch(getCommand()){
 			case OK:
 				processCommand();
+				yylex_destroy();
 				break;
 			case SYSERR:
 				printf("Syserr\n");
 				break;
 		}
-		yylex_destroy();
 	}
-	else 
-	{
-		printf("Do nothing for now ");
+
+		else 
+		{
+			printf("Do nothing for now ");
+		}
+	}
+}
+
+/* Clears the command table */
+static void cleartable(){
+	int i = 0;
+	for (; i < COMCOUNT; i++){
+		TABLE_COMMAND[i].name = NULL; 
+		TABLE_COMMAND[i].inputfile = 0;
+		TABLE_COMMAND[i].outputfile = 0; 
+		TABLE_COMMAND[i].builtcmd = 0; 
+		int j = 0; 
+		for (; j<TABLE_COMMAND[i].argcount; j++){
+			TABLE_COMMAND[i].aptr.args[j] = NULL;
+		}
+		TABLE_COMMAND[i].argcount = 0;
 	}
 }
 
@@ -324,19 +394,21 @@ int main(void){
 	shell_init();
 
 	while(RUNNING){
-		BUILT_IN = ISALIAS = 0;
+		resetINTS();
 		printPrompt(); 
 		switch ( getCommand()){
 			case OK:
+				printf("CASE OK");
 				processCommand(); 
 				break;
 			case SYSERR:
-				printf("Syserr\n");
+				printf("PSyserr\n");
 				break;
 		}
 		if (ISALIAS == 1){
 			resetalias();
 		}
+		cleartable();
 	}
 	printf("\n\nGood bye!! \n\n");
 	return 0; 

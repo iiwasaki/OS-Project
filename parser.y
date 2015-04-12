@@ -14,245 +14,249 @@ int yywrap()
 	return 1;
 }
 
+extern int yy_scan_string(char* string);
+
 %}
 
-%token METACHARACTER SETENV PRINTENV UNSETENV CD ALIAS UNALIAS BYE NEWLINE ALIASSHOW
+%token SETENV PRINTENV UNSETENV CD ALIAS UNALIAS BYE NEWLINE LESSTHAN GREATERTHAN AMP PIPE ALERROR
 
 %union 
 {
 	char *string;
 }
 
+%token <string> ALWORD
 %token <string> WORD
 %token <string> LONGWORD
 
 
 %% 
-
 commands: /*empty */
 		|commands command
 		;
 
-command: 
-		newline
+command:
+		pipes input_redir output_redir background NEWLINE
+		{
+			printf("Successfully piped. \n"); 
+			YYACCEPT;
+		}
 		|
-		setenv 
-		| 
-		bye 
-		| 
-		printenv 
-		| 
-		unsetenv 
-		| 
-		cd 
-		| 
-		alias 
-		| 
-		unalias
-		|
-		word
-		|
-		longword
+		alis NEWLINE
+		{
+			printf("This is alias yes\n");
+			printf("%d", ISALIAS);
+			YYACCEPT;
+		}
 		;
 
-newline:
-		NEWLINE
-		{
-			printf("\n");
-		}
+alis: 
+	alis ali
+	|
+	;
 
-setenv: 
- 		SETENV WORD WORD NEWLINE
- 		{
- 			BUILT_IN = SETENV;
- 			ENV_ARGS.args[0] = $2;
- 			ENV_ARGS.args[1] = $3;  
-			YYACCEPT;
- 		}
- 		|
- 		SETENV WORD LONGWORD NEWLINE
- 		{
- 			BUILT_IN = SETENV; 
- 			ENV_ARGS.args[0] = $2;
- 			ENV_ARGS.args[1] = $3;  
-			YYACCEPT;
- 		}
- 		|
- 		SETENV NEWLINE
- 		{
- 			yyerror("No arguments for setenv operation.");
- 			return 1; 
- 		}
- 		|
- 		error NEWLINE{ return 1;} 
- 		;
-
-
-bye: 
-	BYE NEWLINE
-	{
-		BUILT_IN = BYE; 
-		YYACCEPT;
+ali: 
+	ALWORD {
+		ISALIAS = 1; 
+		COMCOUNT++;
+		printf("Recognized alias");
 	}
-	error NEWLINE{ return 1;} 
+	|
+	WORD {
+		printf("Adding \n");
+		strcat(str, $1);
+		strcat(str, " ");
+		printf("\n%s", str);
+	}
+	|
+	PIPE {
+		strcat(str, "| ");
+		printf("\n%s", str);
+	}
+	|
+	SETENV {
+		strcat(str, "setenv ");
+		printf("\n%s", str);
+	}
+	|
+	PRINTENV {
+		strcat(str, "printenv ");
+		printf("\n%s", str);
+	}
+	|
+	UNSETENV {
+		strcat(str, "unsetenv ");
+		printf("\n%s", str);
+	}
+	|
+	ALIAS {
+		strcat(str, "alias ");
+		printf("\n%s", str);
+	}
+	|
+	UNALIAS { 
+		strcat(str, "unalias ");
+		printf("\n%s", str);
+	}
+	|
+	BYE {
+		strcat(str, "bye ");
+		printf("\n%s", str);
+	}
+	|
+	CD {
+		strcat(str, "cd ");
+		printf("\n%s", str);
+	}
+	|
+	AMP {
+		strcat(str, "& ");
+		printf("\n%s", str);
+	}
+	|
+	LESSTHAN {
+		strcat(str, "< ");
+		printf("\n%s", str);
+	}
+	|
+	GREATERTHAN {
+		strcat(str, "> ");
+		printf("\n%s", str);
+	}
+	|
+	ALERROR NEWLINE { yyerror("Bad alias"); YYABORT; }
+	;
 
+background: 
+		AMP 
+		{
+			printf("This will run in the background. \n");
+		}
+		|
+		/*empty*/
 		;
-	
-printenv: 
-	PRINTENV NEWLINE
-	{
-		BUILT_IN = PRINTENV;
-		YYACCEPT;
-	} 		
-	error NEWLINE{ return 1;} 
 
-	;
-	
-unsetenv: 	
-	UNSETENV WORD NEWLINE 
-	{
-		BUILT_IN = UNSETENV; 
-		ENV_ARGS.args[0] = $2;
-		YYACCEPT;
-	}
- 	error NEWLINE{ return 1;} 
-
-	;
-cd:
-	CD NEWLINE
-	{
-		BUILT_IN = CD;
-		CD_ARGS.args[0] = getenv("HOME");
-		YYACCEPT;
-	}
-	|
-	CD WORD NEWLINE
-	{
-		BUILT_IN = CD;
-		CD_ARGS.args[0] = $2;
-		YYACCEPT;
-	}
-	error NEWLINE{return 1;}
-;
-
-
-
-alias:
-	ALIAS WORD LONGWORD NEWLINE 
-	{
-		BUILT_IN = ALIAS; 
-		ALIAS_ARGS.args[0] = $2;
-		ALIAS_ARGS.args[1] = $3;
-		YYACCEPT; 
-	}
-	|
-	ALIAS LONGWORD WORD NEWLINE
-	{
-		BUILT_IN = ALIAS; 
-		ALIAS_ARGS.args[0] = $2;
-		ALIAS_ARGS.args[1] = $3;
-		YYACCEPT; 
-	}
-	|
-	ALIAS LONGWORD LONGWORD NEWLINE
-	{
-		BUILT_IN = ALIAS; 
-		ALIAS_ARGS.args[0] = $2;
-		ALIAS_ARGS.args[1] = $3;
-		YYACCEPT; 
-	}
-	|
-	ALIAS WORD WORD NEWLINE
-	{
-		BUILT_IN = ALIAS; 
-		ALIAS_ARGS.args[0] = $2;
-		ALIAS_ARGS.args[1] = $3;
-		YYACCEPT; 
-	}
-	|
-	ALIAS WORD NEWLINE 
-	{
-		yyerror("Missing a name or value for Alias.\n");
-		return 1; 
-	}
-	|
-	ALIAS NEWLINE
-	{
-		BUILT_IN = ALIASSHOW; 
-		YYACCEPT;
-	}
- 	error NEWLINE{ return 1;} 
-
-	;
-
-unalias: 
-	UNALIAS WORD NEWLINE
-	{
-		BUILT_IN = UNALIAS; 
-		ALIAS_ARGS.args[0] = $2;
-		YYACCEPT; 
-	}
-	|
-	UNALIAS LONGWORD NEWLINE 
-	{
-		BUILT_IN = UNALIAS; 
-		ALIAS_ARGS.args[0] = $2;
-		YYACCEPT; 
-	}
-	|
-	UNALIAS NEWLINE
-	{
-		yyerror("Missing the alias name to unalias.\n"); 
-		return 1;
-	}
- 	error NEWLINE{ return 1;} 
-	;
-
-word: 
-	WORD
-	{
-		int i=0;
-		int match = -1;  
-		for (; i < ALIASCOUNT; ++i){
-			if (strcmp($1, TABLE_ALIAS[i].aliasname) == 0 && TABLE_ALIAS[i].appeared > 0){ 
-				yyerror ("Circular aliasing, infinite loop. \n");
-				return 1; 
-			}
-			else if (strcmp($1, TABLE_ALIAS[i].aliasname) == 0 && TABLE_ALIAS[i].appeared == 0){
-				match = 1; 
-				ISALIAS = 1;
-				TABLE_ALIAS[i].appeared = 1; 
-				alias_to_be_run = strcat(TABLE_ALIAS[i].aliasvalue, "\n"); 
-				YYACCEPT; 
-			}
-		}
-		if (match == -1){
-		yyerror("Unrecognized command. Please check your input. \n");
-		}
-	}
-	error NEWLINE{printf("Word error");return 1;}
-	;
-
-longword: 
-		LONGWORD 
+input_redir: 
+		LESSTHAN WORD 
 		{
-		int i=0;
-		int match = -1;  
-		for (; i < ALIASCOUNT; ++i){
-			if (strcmp($1, TABLE_ALIAS[i].aliasname) == 0 && TABLE_ALIAS[i].appeared > 0){ 
-				yyerror ("Circular aliasing, infinite loop. \n");
-				return 1; 
-			}
-			else if (strcmp($1, TABLE_ALIAS[i].aliasname) == 0 && TABLE_ALIAS[i].appeared == 0){
-				match = 1; 
-				ISALIAS = 1;
-				TABLE_ALIAS[i].appeared = 1; 
-				alias_to_be_run = strcat(TABLE_ALIAS[i].aliasvalue, "\n"); 
-				YYACCEPT; 
-			}
+			printf("Input will be redirected to %s\n", $2);
 		}
-		if (match == -1){
-		yyerror("Unrecognized command. Please check your input. \n");
+		| 
+		LESSTHAN LONGWORD
+		{
+			printf("Input will be redirected to %s\n", $2);
 		}
-	}
-		error NEWLINE{printf("Word error");return 1;}
+		LESSTHAN 
+		{
+			printf("Error, no word supplied!\n");
+		}
+		|
+		/*could be nothing*/
+		;
+
+output_redir: 
+		GREATERTHAN WORD 
+		{
+			printf("Output will be redirected to %s\n", $2);
+		}
+		|
+		GREATERTHAN LONGWORD 
+		{
+			printf("Output will be redirected to %s\n",$2);
+		}
+		GREATERTHAN 
+		{
+			printf("Output error no file set\n");
+		}
+		|
+		/*could be nothing*/
+		;
+pipes: 
+		pipes PIPE cmdargs {COMCOUNT++;}
+		|
+		cmdargs {COMCOUNT++;}
+		;
+cmdargs:
+		cmdword arguments
+		;
+
+arguments: 
+		arguments argument
+		|
+		;
+		
+argument:
+		WORD {
+						printf("Argument %d is %s\n", TABLE_COMMAND[COMCOUNT].argcount, $1);
+						TABLE_COMMAND[COMCOUNT].aptr.args[TABLE_COMMAND[COMCOUNT].argcount] = $1;
+						TABLE_COMMAND[COMCOUNT].argcount++; 
+			
+		}
+
+		|
+		LONGWORD
+		{
+				TABLE_COMMAND[COMCOUNT].aptr.args[TABLE_COMMAND[COMCOUNT].argcount] = $1;
+				TABLE_COMMAND[COMCOUNT].argcount++; 			
+		}
+		;
+
+cmdword:
+		WORD {
+			printf("Cmd is %s\n", $1);
+
+		}
+		|
+		LONGWORD{
+			printf("Cmd longword is %s\n", $1);
+		}
+		|
+		SETENV {
+			printf("Setty selected\n");
+			TABLE_COMMAND[COMCOUNT].name = "SETENV";
+			TABLE_COMMAND[COMCOUNT].builtcmd = SETENV; 
+			BUILT_IN = 1; 
+		}
+		|
+		PRINTENV {
+			TABLE_COMMAND[COMCOUNT].name = "PRINTENV";
+			TABLE_COMMAND[COMCOUNT].builtcmd = PRINTENV; 
+			BUILT_IN = 1; 
+		}
+		|
+		UNSETENV{
+			TABLE_COMMAND[COMCOUNT].name = "UNSETENV";
+			TABLE_COMMAND[COMCOUNT].builtcmd = UNSETENV; 
+			BUILT_IN = 1; 
+		}
+		|
+		CD {
+			TABLE_COMMAND[COMCOUNT].name = "CD";
+			TABLE_COMMAND[COMCOUNT].builtcmd = CD;
+			BUILT_IN = 1; 
+		}	
+		|
+		ALIAS {
+			TABLE_COMMAND[COMCOUNT].name = "ALIAS";
+			TABLE_COMMAND[COMCOUNT].builtcmd = ALIAS;
+			BUILT_IN = 1; 
+		}
+		|
+		UNALIAS {
+			TABLE_COMMAND[COMCOUNT].name = "UNALIAS";
+			TABLE_COMMAND[COMCOUNT].builtcmd = UNALIAS;
+			BUILT_IN = 1; 
+		}
+		|
+		BYE {
+			TABLE_COMMAND[COMCOUNT].name = "BYE";
+			TABLE_COMMAND[COMCOUNT].builtcmd = BYE; 
+			BUILT_IN = 1; 
+		}
+		|
+		PIPE {
+			printf("Here I am pipe");
+		}
+		;
+
+%%
